@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { supabase } from '@/lib/supabaseClient'
+import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 
 export default function LoginPage() {
@@ -9,20 +9,26 @@ export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
+  const supabase = createClient()
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     setError(null)
 
-    const { error } = await supabase.auth.signInWithPassword({
+    console.log('📤 Login attempt with:', { email, password })
+
+    const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     })
 
+    console.log('📡 Supabase login response:', data, error)
+
     if (error) {
       setError(error.message)
     } else {
-      setTimeout(() => router.push('/dashboard'), 100)
+      // Force a page refresh to ensure cookies are properly set
+      window.location.href = '/dashboard'
     }
   }
 
@@ -38,7 +44,7 @@ export default function LoginPage() {
     if (error) {
       setError(error.message)
     } else {
-      router.push('/dashboard')
+      window.location.href = '/dashboard'
     }
   }
 

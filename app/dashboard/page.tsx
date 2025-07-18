@@ -1,17 +1,26 @@
-import { createServerComponentClient } from '@supabase/auth-helpers-nextjs'
-import { cookies } from 'next/headers'
+import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import LogoutButton from './LogoutButton'
 
 export default async function Dashboard() {
-  const cookieStore = cookies() // ← this part is now async-compatible
-  const supabase = createServerComponentClient({ cookies: () => cookieStore })
+  const supabase = await createClient()
 
   const {
     data: { session },
+    error,
   } = await supabase.auth.getSession()
 
+  // 🧪 LOGS: Check what Supabase gives back
+  console.log('📡 Supabase session:', session)
+  console.log('🐛 Supabase error:', error)
+  
+  if (error) {
+    console.error('❌ Supabase session error:', error.message)
+    redirect('/login')
+  }
+
   if (!session) {
+    console.warn('⚠️ No session found, redirecting to login')
     redirect('/login')
   }
 
