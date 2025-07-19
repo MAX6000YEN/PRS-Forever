@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { dbConnection } from '@/src/db/db-connection'
-import { workoutSessions, workoutExercises } from '@/src/db/migrations/schema'
+import { workoutSessions, workoutExercises } from '@/database/schema'
 import { eq, and } from 'drizzle-orm'
+import { dbConnection } from '@/app/db-connection'
 
 export async function POST(request: NextRequest) {
   try {

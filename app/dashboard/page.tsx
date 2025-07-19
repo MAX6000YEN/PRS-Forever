@@ -2,9 +2,9 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import HamburgerMenu from '../components/HamburgerMenu'
 import WorkoutInterface from '../components/WorkoutInterface'
-import { dbConnection } from '@/src/db/db-connection'
-import { muscleGroups, workoutSchedule, exercises, workoutSessions, workoutExercises } from '@/src/db/migrations/schema'
-import { and, eq, inArray, isNull } from 'drizzle-orm'
+import { dbConnection } from '@/app/db-connection'
+import { muscleGroups, workoutSchedule, exercises, workoutSessions, workoutExercises } from '@/database/schema'
+import { and, eq, isNull } from 'drizzle-orm'
 
 export default async function Dashboard() {
   const supabase = await createClient()
