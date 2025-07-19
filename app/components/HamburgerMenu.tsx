@@ -43,21 +43,20 @@ export default function HamburgerMenu({ userEmail, userName }: HamburgerMenuProp
             {/* User Info */}
             <div className="mb-12">
               <h2 className="text-2xl font-semibold text-white mb-6">{displayName}</h2>
-              
-              {/* Dashboard Button */}
+            </div>
+
+            {/* Menu Items */}
+            <div className="space-y-6">
               <button
                 onClick={() => {
                   setIsOpen(false)
                   router.push('/dashboard')
                 }}
-                className="block w-full text-xl text-white hover:text-gray-300 transition-colors py-3 mb-4"
+                className="block w-full text-xl text-white hover:text-gray-300 transition-colors py-3"
               >
                 Dashboard
               </button>
-            </div>
-
-            {/* Menu Items */}
-            <div className="space-y-6">
+              
               <button
                 onClick={() => {
                   setIsOpen(false)

@@ -49,6 +49,13 @@ export default function WorkoutInterface({ workoutData, userId, currentDate }: W
 
   const muscleGroupsText = workoutData.map(data => data.muscleGroup).join(' and ')
 
+  // Calculate total number of exercises across all muscle groups
+  const totalExercises = workoutData.reduce((total, data) => total + data.exercises.length, 0)
+  
+  // Check if all exercises have been filled in
+  const allExercisesFilled = Object.keys(exerciseData).length === totalExercises && 
+    Object.values(exerciseData).every(data => data.weight > 0 && data.reps > 0 && data.sets > 0)
+
   const saveWorkout = async () => {
     setIsSaving(true)
     try {
@@ -96,7 +103,7 @@ export default function WorkoutInterface({ workoutData, userId, currentDate }: W
       {workoutData.length > 0 && (
         <div className="mb-6">
           <p className="text-lg text-gray-300">
-            <span className="text-white font-medium">Today's focus: </span>
+            <span className="text-white font-medium">Today&apos;s focus: </span>
             {muscleGroupsText}
           </p>
         </div>
@@ -115,8 +122,8 @@ export default function WorkoutInterface({ workoutData, userId, currentDate }: W
         ))}
       </div>
 
-      {/* Total workout weight */}
-      {totalWorkoutWeight > 0 && (
+      {/* Total workout weight - Show as soon as there are muscle groups scheduled */}
+      {workoutData.length > 0 && (
         <div className="block-bg rounded-lg p-6 mt-6">
           <div className="flex justify-between items-center">
             <h2 className="text-2xl font-bold text-white">Total Workout</h2>
@@ -125,13 +132,17 @@ export default function WorkoutInterface({ workoutData, userId, currentDate }: W
         </div>
       )}
 
-      {/* Save button */}
-      {totalWorkoutWeight > 0 && (
+      {/* Save button - Show as soon as there are muscle groups scheduled, but disable until all fields are filled */}
+      {workoutData.length > 0 && (
         <div className="mt-6 text-center">
           <button
             onClick={saveWorkout}
-            disabled={isSaving}
-            className="btn-primary text-lg px-8 py-3"
+            disabled={isSaving || !allExercisesFilled}
+            className={`text-lg px-8 py-3 rounded-lg font-medium transition-colors ${
+              allExercisesFilled && !isSaving
+                ? 'bg-blue-600 hover:bg-blue-500 text-white'
+                : 'bg-gray-600 text-gray-400 cursor-not-allowed'
+            }`}
           >
             {isSaving ? 'Saving...' : 'My workout is over!'}
           </button>

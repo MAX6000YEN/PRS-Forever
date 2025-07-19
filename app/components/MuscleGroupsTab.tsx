@@ -33,9 +33,55 @@ export default function MuscleGroupsTab({
   const [isLoading, setIsLoading] = useState(false)
   const supabase = createClient()
 
+  // Get current day
+  const today = new Date()
+  const currentDayOfWeek = today.getDay() // 0 = Sunday, 1 = Monday, etc.
+  
   // Week starting Monday, Sunday at the end
   const dayNames = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
   const dayIndexMap = [1, 2, 3, 4, 5, 6, 0] // Map to actual day indices (0 = Sunday, 1 = Monday, etc.)
+
+  // Create ordered days array with today first
+  const getOrderedDays = () => {
+    const orderedDays: Array<{ name: string; index: number; isToday: boolean; isSecondToday?: boolean }> = []
+    
+    // Find today's index in our dayNames array
+    const todayIndex = dayIndexMap.findIndex(dayIndex => dayIndex === currentDayOfWeek)
+    const todayName = dayNames[todayIndex]
+    
+    // Add today first if it exists in our array
+    if (todayIndex !== -1) {
+      orderedDays.push({ 
+        name: `${todayName} (Today)`, 
+        index: dayIndexMap[todayIndex], 
+        isToday: true 
+      })
+    }
+    
+    // Add all other days in order, marking the second occurrence of today
+    dayNames.forEach((dayName, index) => {
+      const dayIndex = dayIndexMap[index]
+      if (dayIndex !== currentDayOfWeek) {
+        orderedDays.push({ 
+          name: dayName, 
+          index: dayIndex, 
+          isToday: false 
+        })
+      } else {
+        // This is the second occurrence of today
+        orderedDays.push({ 
+          name: dayName, 
+          index: dayIndex, 
+          isToday: false,
+          isSecondToday: true
+        })
+      }
+    })
+    
+    return orderedDays
+  }
+
+  const orderedDays = getOrderedDays()
 
   // Group schedule by day
   const scheduleByDay = workoutSchedule.reduce((acc, item) => {
@@ -132,12 +178,23 @@ export default function MuscleGroupsTab({
       </p>
 
       <div className="space-y-6">
-        {dayNames.map((dayName, index) => {
-          const dayOfWeek = dayIndexMap[index]
+        {orderedDays.map((day) => {
+          const dayOfWeek = day.index
           return (
-            <div key={dayOfWeek} className="border border-gray-600 rounded-lg p-4">
+            <div key={`${dayOfWeek}-${day.isToday ? 'today' : 'regular'}`} className={`border rounded-lg p-4 ${
+              day.isToday ? 'border-blue-500 bg-blue-900 bg-opacity-20' : 'border-gray-600'
+            }`}>
               <div className="flex justify-between items-center mb-4">
-                <h3 className="text-xl font-semibold text-white">{dayName}</h3>
+                <div>
+                  <h3 className={`text-xl font-semibold ${day.isToday ? 'text-blue-300' : 'text-white'}`}>
+                    {day.name}
+                  </h3>
+                  {day.isSecondToday && (
+                    <p className="text-sm text-gray-400 mt-1">
+                      Today is {dayNames[dayIndexMap.findIndex(dayIndex => dayIndex === currentDayOfWeek)]}, find it at the top of the page
+                    </p>
+                  )}
+                </div>
                 <button
                   onClick={() => handleNoWorkoutDay(dayOfWeek)}
                   disabled={isLoading}
@@ -145,24 +202,6 @@ export default function MuscleGroupsTab({
                 >
                   No workout this day
                 </button>
-              </div>
-              
-              {/* Currently scheduled muscle groups */}
-              <div className="mb-4">
-                {scheduleByDay[dayOfWeek]?.length > 0 ? (
-                  <div className="flex flex-wrap gap-2">
-                    {scheduleByDay[dayOfWeek].map(item => (
-                      <span 
-                        key={item.id}
-                        className="bg-green-600 text-white px-3 py-1 rounded-full text-sm capitalize"
-                      >
-                        {item.muscle_groups.name}
-                      </span>
-                    ))}
-                  </div>
-                ) : (
-                  <span className="text-gray-400 italic">No muscle groups scheduled</span>
-                )}
               </div>
 
               {/* Muscle group toggles */}

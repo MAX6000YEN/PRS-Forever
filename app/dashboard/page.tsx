@@ -160,7 +160,7 @@ export default async function Dashboard() {
         <div className="block-bg rounded-lg p-8 text-center">
           <h2 className="text-2xl text-white mb-4">No training scheduled today!</h2>
           <p className="text-lg text-gray-300">
-            It's the perfect time for optimal muscle recovery. Take care of yourself!
+            It&apos;s the perfect time for optimal muscle recovery. Take care of yourself!
           </p>
         </div>
       ) : workoutData.length > 0 ? (

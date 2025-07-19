@@ -47,7 +47,7 @@ export default function MuscleGroupSection({
 
   useEffect(() => {
     onMuscleGroupTotalChange(muscleGroupName, muscleGroupTotal)
-  }, [muscleGroupTotal, muscleGroupName]) // Removed onMuscleGroupTotalChange from dependencies
+  }, [muscleGroupTotal, muscleGroupName, onMuscleGroupTotalChange])
 
   // Show message if no exercises
   if (exercises.length === 0) {
@@ -60,7 +60,7 @@ export default function MuscleGroupSection({
         
         <div className="text-center py-8">
           <p className="text-gray-300 mb-4">
-            This muscle group doesn't contain any exercises yet. Head over to{' '}
+            This muscle group doesn&apos;t contain any exercises yet. Head over to{' '}
             <Link href="/management" className="text-blue-400 hover:text-blue-300 underline">
               Management
             </Link>
