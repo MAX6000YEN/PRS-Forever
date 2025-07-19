@@ -1,8 +1,11 @@
-import { pgTable, unique, pgPolicy, uuid, varchar, timestamp, foreignKey, check, integer, date, numeric } from "drizzle-orm/pg-core"
+import { pgTable, unique, pgPolicy, uuid, varchar, timestamp, foreignKey, check, integer, date, numeric, boolean, pgSchema } from "drizzle-orm/pg-core"
 import { sql } from "drizzle-orm"
 
+// Create auth schema reference
+const authSchema = pgSchema("auth");
+
 // Auth users table (from Supabase auth schema)
-export const usersInAuth = pgTable("users", {
+export const usersInAuth = authSchema.table("users", {
 	id: uuid().primaryKey().notNull(),
 }, (table) => [
 	// This table is managed by Supabase auth, so we only define the id field we need
@@ -22,6 +25,7 @@ export const exercises = pgTable("exercises", {
 	name: varchar({ length: 100 }).notNull(),
 	muscleGroupId: uuid("muscle_group_id"),
 	userId: uuid("user_id"),
+	hidden: boolean().default(false).notNull(),
 	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow(),
 }, (table) => [
 	foreignKey({

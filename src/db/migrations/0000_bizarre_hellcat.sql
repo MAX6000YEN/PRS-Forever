@@ -1,0 +1,1 @@
+ALTER TABLE "exercises" ADD COLUMN "hidden" boolean DEFAULT false NOT NULL;
