@@ -35,8 +35,20 @@ export async function middleware(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser()
 
-  if (!user && request.nextUrl.pathname.startsWith('/dashboard')) {
-    // no user, potentially respond by redirecting the user to the login page
+  // If user is logged in and trying to access login page, redirect to dashboard
+  if (user && (request.nextUrl.pathname === '/login' || request.nextUrl.pathname === '/reset-password')) {
+    const url = request.nextUrl.clone()
+    url.pathname = '/dashboard'
+    return NextResponse.redirect(url)
+  }
+
+  // If user is not logged in and trying to access protected routes, redirect to login
+  if (!user && (
+    request.nextUrl.pathname.startsWith('/dashboard') ||
+    request.nextUrl.pathname.startsWith('/management') ||
+    request.nextUrl.pathname.startsWith('/statistics') ||
+    request.nextUrl.pathname.startsWith('/account')
+  )) {
     const url = request.nextUrl.clone()
     url.pathname = '/login'
     return NextResponse.redirect(url)
