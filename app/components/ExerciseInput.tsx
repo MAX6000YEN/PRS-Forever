@@ -59,6 +59,7 @@ export default function ExerciseInput({
           <label className="block text-sm text-gray-300 mb-1">Weight (kg)</label>
           <input
             type="number"
+            inputMode="numeric"
             value={weight}
             onChange={(e) => handleNumberInput(e.target.value, setWeight)}
             placeholder="?"
@@ -73,6 +74,7 @@ export default function ExerciseInput({
           <label className="block text-sm text-gray-300 mb-1">Reps</label>
           <input
             type="number"
+            inputMode="numeric"
             value={reps}
             onChange={(e) => handleNumberInput(e.target.value, setReps)}
             placeholder="?"
@@ -86,6 +88,7 @@ export default function ExerciseInput({
           <label className="block text-sm text-gray-300 mb-1">Sets</label>
           <input
             type="number"
+            inputMode="numeric"
             value={sets}
             onChange={(e) => handleNumberInput(e.target.value, setSets)}
             placeholder="?"
