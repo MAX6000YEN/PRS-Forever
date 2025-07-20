@@ -13,6 +13,7 @@ interface Exercise {
   id: string
   name: string
   muscle_group_id: string
+  hidden: boolean
   muscle_groups: {
     id: string
     name: string

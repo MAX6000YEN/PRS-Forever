@@ -12,6 +12,7 @@ interface Exercise {
   id: string
   name: string
   muscle_group_id: string
+  hidden: boolean
   muscle_groups: {
     id: string
     name: string
@@ -71,7 +72,8 @@ export default function ExercisesTab({
         .insert({
           name: newExercise.name.trim(),
           muscle_group_id: newExercise.muscle_group_id,
-          user_id: userId
+          user_id: userId,
+          hidden: false
         })
         .select(`
           *,
@@ -137,6 +139,35 @@ export default function ExercisesTab({
     } catch (error) {
       console.error('Error updating exercise:', error)
       alert('Error updating exercise. Please try again.')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleToggleHidden = async (exerciseId: string, currentHidden: boolean) => {
+    setIsLoading(true)
+    try {
+      const { data, error } = await supabase
+        .from('exercises')
+        .update({ hidden: !currentHidden })
+        .eq('id', exerciseId)
+        .select(`
+          *,
+          muscle_groups (
+            id,
+            name
+          )
+        `)
+        .single()
+
+      if (error) throw error
+
+      setExercises(prev => 
+        prev.map(ex => ex.id === exerciseId ? data : ex)
+      )
+    } catch (error) {
+      console.error('Error toggling exercise visibility:', error)
+      alert('Error updating exercise visibility. Please try again.')
     } finally {
       setIsLoading(false)
     }
@@ -236,7 +267,12 @@ export default function ExercisesTab({
             <h3 className="text-xl font-semibold text-white mb-4 capitalize">{muscleGroupName}</h3>
             <div className="space-y-3">
               {groupExercises.map(exercise => (
-                <div key={exercise.id} className="bg-gray-800 rounded-lg p-3">
+                <div 
+                  key={exercise.id} 
+                  className={`bg-gray-800 rounded-lg p-3 transition-opacity ${
+                    exercise.hidden ? 'opacity-50' : 'opacity-100'
+                  }`}
+                >
                   {editingExercise?.id === exercise.id ? (
                     <form onSubmit={handleUpdateExercise} className="space-y-3">
                       <div>
@@ -283,13 +319,27 @@ export default function ExercisesTab({
                     </form>
                   ) : (
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                      <span className="text-white font-medium">{exercise.name}</span>
+                      <span className={`font-medium ${exercise.hidden ? 'text-gray-400' : 'text-white'}`}>
+                        {exercise.name}
+                        {exercise.hidden && <span className="text-xs text-gray-500 ml-2">(Hidden)</span>}
+                      </span>
                       <div className="flex gap-2">
                         <button
                           onClick={() => setEditingExercise(exercise)}
                           className="px-3 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-500"
                         >
                           Edit
+                        </button>
+                        <button
+                          onClick={() => handleToggleHidden(exercise.id, exercise.hidden)}
+                          disabled={isLoading}
+                          className={`px-3 py-1 rounded text-sm transition-colors disabled:opacity-50 ${
+                            exercise.hidden 
+                              ? 'bg-green-600 hover:bg-green-500 text-white' 
+                              : 'bg-yellow-600 hover:bg-yellow-500 text-white'
+                          }`}
+                        >
+                          {exercise.hidden ? 'Show' : 'Hide'}
                         </button>
                         <button
                           onClick={() => setDeleteConfirm(exercise.id)}

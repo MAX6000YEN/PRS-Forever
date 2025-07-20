@@ -65,7 +65,7 @@ export default async function Dashboard() {
 
   const isNoWorkoutDay = noWorkoutEntry.length > 0;
 
-  // Get exercises for today's muscle groups using Drizzle
+  // Get exercises for today's muscle groups using Drizzle (excluding hidden exercises)
   const muscleGroupIds = getTodaysWorkout
     .filter(entry => entry.muscleGroupId !== null)
     .map(entry => entry.muscleGroupId!);
@@ -76,7 +76,8 @@ export default async function Dashboard() {
       .findMany({
         where: (exercises, { eq, inArray }) => and(
           eq(exercises.userId, session.user.id),
-          inArray(exercises.muscleGroupId, muscleGroupIds)
+          inArray(exercises.muscleGroupId, muscleGroupIds),
+          eq(exercises.hidden, false) // Only show non-hidden exercises
         )
       });
   }

@@ -22,7 +22,7 @@ export default async function Management() {
     .select('*')
     .order('name')
 
-  // Get user's exercises
+  // Get user's exercises (including hidden field)
   const { data: exercises } = await supabase
     .from('exercises')
     .select(`
