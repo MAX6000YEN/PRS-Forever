@@ -1,6 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
-import HamburgerMenu from '../components/HamburgerMenu'
 import ManagementInterface from '../components/ManagementInterface'
 
 export default async function Management() {
@@ -51,8 +50,6 @@ export default async function Management() {
 
   return (
     <div className="min-h-screen p-4 pb-20">
-      <HamburgerMenu userEmail={userEmail} />
-      
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-4xl font-bold text-white mb-2">Management</h1>

@@ -1,6 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
-import HamburgerMenu from '../components/HamburgerMenu'
 import WorkoutInterface from '../components/WorkoutInterface'
 import { dbConnection } from '@/app/db-connection'
 import { muscleGroups, workoutSchedule, exercises, workoutSessions, workoutExercises } from '@/database/schema'
@@ -147,8 +146,6 @@ export default async function Dashboard() {
 
   return (
     <div className="min-h-screen p-4 pb-20">
-      <HamburgerMenu userEmail={userEmail} />
-      
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-4xl font-bold text-white mb-2">{currentDay}</h1>

@@ -23,10 +23,10 @@ export default function HamburgerMenu({ userEmail, userName }: HamburgerMenuProp
 
   return (
     <>
-      {/* Hamburger Button */}
+      {/* Hamburger Button - Fixed position */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="fixed top-4 right-4 z-50 p-2 text-white"
+        className="fixed top-4 right-4 z-50 p-2 text-white bg-black bg-opacity-50 rounded-lg backdrop-blur-sm"
         aria-label="Menu"
       >
         <div className="w-6 h-6 flex flex-col justify-center items-center">
@@ -84,7 +84,7 @@ export default function HamburgerMenu({ userEmail, userName }: HamburgerMenuProp
                 }}
                 className="block w-full text-xl text-white hover:text-gray-300 transition-colors py-3"
               >
-                Account Settings
+                Settings
               </button>
               
               <button
