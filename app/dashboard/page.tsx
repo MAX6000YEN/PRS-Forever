@@ -135,6 +135,9 @@ export default async function Dashboard() {
           return {
             id: exercise.id,
             name: exercise.name,
+            description: exercise.description,
+            external_link: exercise.externalLink,
+            external_link_name: exercise.externalLinkName,
             previousData: !!previousExerciseData ? {
               weight: Number(previousExerciseData?.weight || 0),
               reps: previousExerciseData?.reps || 0,
