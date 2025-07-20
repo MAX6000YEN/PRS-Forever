@@ -13,6 +13,9 @@ interface Exercise {
   name: string
   muscle_group_id: string
   hidden: boolean
+  description?: string
+  external_link?: string
+  external_link_name?: string
   muscle_groups: {
     id: string
     name: string
@@ -35,7 +38,10 @@ export default function ExercisesTab({
   const [showAddForm, setShowAddForm] = useState(false)
   const [newExercise, setNewExercise] = useState({
     name: '',
-    muscle_group_id: ''
+    muscle_group_id: '',
+    description: '',
+    external_link: '',
+    external_link_name: ''
   })
   const [editingExercise, setEditingExercise] = useState<Exercise | null>(null)
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null)
@@ -73,7 +79,10 @@ export default function ExercisesTab({
           name: newExercise.name.trim(),
           muscle_group_id: newExercise.muscle_group_id,
           user_id: userId,
-          hidden: false
+          hidden: false,
+          description: newExercise.description.trim() || null,
+          external_link: newExercise.external_link.trim() || null,
+          external_link_name: newExercise.external_link_name.trim() || null
         })
         .select(`
           *,
@@ -87,7 +96,13 @@ export default function ExercisesTab({
       if (error) throw error
 
       setExercises(prev => [...prev, data])
-      setNewExercise({ name: '', muscle_group_id: '' })
+      setNewExercise({ 
+        name: '', 
+        muscle_group_id: '', 
+        description: '', 
+        external_link: '', 
+        external_link_name: '' 
+      })
       setShowAddForm(false)
     } catch (error) {
       console.error('Error adding exercise:', error)
@@ -118,7 +133,10 @@ export default function ExercisesTab({
         .from('exercises')
         .update({
           name: editingExercise.name.trim(),
-          muscle_group_id: editingExercise.muscle_group_id
+          muscle_group_id: editingExercise.muscle_group_id,
+          description: editingExercise.description?.trim() || null,
+          external_link: editingExercise.external_link?.trim() || null,
+          external_link_name: editingExercise.external_link_name?.trim() || null
         })
         .eq('id', editingExercise.id)
         .select(`
@@ -237,6 +255,45 @@ export default function ExercisesTab({
                 ))}
               </select>
             </div>
+            <div>
+              <label className="block text-sm text-gray-300 mb-2">Description (optional, max 300 characters)</label>
+              <textarea
+                value={newExercise.description}
+                onChange={(e) => setNewExercise(prev => ({ ...prev, description: e.target.value }))}
+                className="w-full p-3 bg-black bg-opacity-75 text-white rounded-lg border border-gray-600 focus:border-white resize-none"
+                placeholder="Enter exercise description"
+                maxLength={300}
+                rows={3}
+              />
+              <div className="text-xs text-gray-400 mt-1">
+                {newExercise.description.length}/300 characters
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm text-gray-300 mb-2">External Link Name (optional)</label>
+              <input
+                type="text"
+                value={newExercise.external_link_name}
+                onChange={(e) => setNewExercise(prev => ({ ...prev, external_link_name: e.target.value }))}
+                className="w-full p-3 bg-black bg-opacity-75 text-white rounded-lg border border-gray-600 focus:border-white"
+                placeholder="e.g., 'Tutorial Video', 'Form Guide'"
+                maxLength={100}
+              />
+            </div>
+            <div>
+              <label className="block text-sm text-gray-300 mb-2">External Link (optional, max 150 characters)</label>
+              <input
+                type="url"
+                value={newExercise.external_link}
+                onChange={(e) => setNewExercise(prev => ({ ...prev, external_link: e.target.value }))}
+                className="w-full p-3 bg-black bg-opacity-75 text-white rounded-lg border border-gray-600 focus:border-white"
+                placeholder="https://example.com"
+                maxLength={150}
+              />
+              <div className="text-xs text-gray-400 mt-1">
+                {newExercise.external_link.length}/150 characters
+              </div>
+            </div>
             <div className="flex flex-col sm:flex-row gap-3">
               <button
                 type="submit"
@@ -249,7 +306,13 @@ export default function ExercisesTab({
                 type="button"
                 onClick={() => {
                   setShowAddForm(false)
-                  setNewExercise({ name: '', muscle_group_id: '' })
+                  setNewExercise({ 
+                    name: '', 
+                    muscle_group_id: '', 
+                    description: '', 
+                    external_link: '', 
+                    external_link_name: '' 
+                  })
                 }}
                 className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-500"
               >
@@ -300,6 +363,36 @@ export default function ExercisesTab({
                           ))}
                         </select>
                       </div>
+                      <div>
+                        <label className="block text-sm text-gray-300 mb-1">Description (max 300 characters)</label>
+                        <textarea
+                          value={editingExercise.description || ''}
+                          onChange={(e) => setEditingExercise(prev => prev ? { ...prev, description: e.target.value } : null)}
+                          className="w-full p-2 bg-black bg-opacity-75 text-white rounded border border-gray-600 focus:border-white resize-none"
+                          maxLength={300}
+                          rows={3}
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm text-gray-300 mb-1">External Link Name</label>
+                        <input
+                          type="text"
+                          value={editingExercise.external_link_name || ''}
+                          onChange={(e) => setEditingExercise(prev => prev ? { ...prev, external_link_name: e.target.value } : null)}
+                          className="w-full p-2 bg-black bg-opacity-75 text-white rounded border border-gray-600 focus:border-white"
+                          maxLength={100}
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm text-gray-300 mb-1">External Link (max 150 characters)</label>
+                        <input
+                          type="url"
+                          value={editingExercise.external_link || ''}
+                          onChange={(e) => setEditingExercise(prev => prev ? { ...prev, external_link: e.target.value } : null)}
+                          className="w-full p-2 bg-black bg-opacity-75 text-white rounded border border-gray-600 focus:border-white"
+                          maxLength={150}
+                        />
+                      </div>
                       <div className="flex flex-col sm:flex-row gap-2">
                         <button 
                           type="submit" 
@@ -318,36 +411,53 @@ export default function ExercisesTab({
                       </div>
                     </form>
                   ) : (
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                      <span className={`font-medium ${exercise.hidden ? 'text-gray-400' : 'text-white'}`}>
-                        {exercise.name}
-                        {exercise.hidden && <span className="text-xs text-gray-500 ml-2">(Hidden)</span>}
-                      </span>
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => setEditingExercise(exercise)}
-                          className="px-3 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-500"
-                        >
-                          Edit
-                        </button>
-                        <button
-                          onClick={() => handleToggleHidden(exercise.id, exercise.hidden)}
-                          disabled={isLoading}
-                          className={`px-3 py-1 rounded text-sm transition-colors disabled:opacity-50 ${
-                            exercise.hidden 
-                              ? 'bg-green-600 hover:bg-green-500 text-white' 
-                              : 'bg-yellow-600 hover:bg-yellow-500 text-white'
-                          }`}
-                        >
-                          {exercise.hidden ? 'Show' : 'Hide'}
-                        </button>
-                        <button
-                          onClick={() => setDeleteConfirm(exercise.id)}
-                          className="px-3 py-1 bg-red-600 text-white rounded text-sm hover:bg-red-500"
-                        >
-                          Delete
-                        </button>
+                    <div className="space-y-2">
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                        <span className={`font-medium ${exercise.hidden ? 'text-gray-400' : 'text-white'}`}>
+                          {exercise.name}
+                          {exercise.hidden && <span className="text-xs text-gray-500 ml-2">(Hidden)</span>}
+                        </span>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => setEditingExercise(exercise)}
+                            className="px-3 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-500"
+                          >
+                            Edit
+                          </button>
+                          <button
+                            onClick={() => handleToggleHidden(exercise.id, exercise.hidden)}
+                            disabled={isLoading}
+                            className={`px-3 py-1 rounded text-sm transition-colors disabled:opacity-50 ${
+                              exercise.hidden 
+                                ? 'bg-green-600 hover:bg-green-500 text-white' 
+                                : 'bg-yellow-600 hover:bg-yellow-500 text-white'
+                            }`}
+                          >
+                            {exercise.hidden ? 'Show' : 'Hide'}
+                          </button>
+                          <button
+                            onClick={() => setDeleteConfirm(exercise.id)}
+                            className="px-3 py-1 bg-red-600 text-white rounded text-sm hover:bg-red-500"
+                          >
+                            Delete
+                          </button>
+                        </div>
                       </div>
+                      {exercise.description && (
+                        <p className="text-sm text-gray-300 mt-2">
+                          {exercise.description}
+                        </p>
+                      )}
+                      {exercise.external_link && exercise.external_link_name && (
+                        <a
+                          href={exercise.external_link}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-sm text-blue-400 hover:text-blue-300 underline inline-block mt-1"
+                        >
+                          {exercise.external_link_name}
+                        </a>
+                      )}
                     </div>
                   )}
                 </div>

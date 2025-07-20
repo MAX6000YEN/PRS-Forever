@@ -52,8 +52,6 @@ export default function LoginPage() {
     const currentEmail = emailInput?.value || email
     const currentPassword = passwordInput?.value || password
 
-    console.log('📤 Login attempt with:', { email: currentEmail, password: currentPassword })
-
     if (!currentEmail || !currentPassword) {
       setError('Please enter both email and password')
       return
@@ -63,8 +61,6 @@ export default function LoginPage() {
       email: currentEmail,
       password: currentPassword,
     })
-
-    console.log('📡 Supabase login response:', data, error)
 
     if (error) {
       setError(error.message)
@@ -155,7 +151,7 @@ export default function LoginPage() {
               placeholder="Email"
               value={email}
               onChange={e => setEmail(e.target.value)}
-              className="w-full px-3 py-2 border rounded"
+              className="login-input"
               required
             />
             {error && <p className="text-red-500">{error}</p>}
@@ -182,7 +178,11 @@ export default function LoginPage() {
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen p-4">
-      <h1 className="text-2xl font-bold mb-4">Login or Sign Up</h1>
+      {/* Updated title with RPS and Forever */}
+      <div className="text-center mb-8">
+        <h1 className="text-6xl font-extrabold text-black mb-2" style={{ fontWeight: 800 }}>RPS</h1>
+        <h3 className="text-3xl font-light text-black" style={{ fontWeight: 300 }}>Forever</h3>
+      </div>
 
       <form className="space-y-4 w-full max-w-sm" onSubmit={handleLogin}>
         <input
@@ -190,7 +190,7 @@ export default function LoginPage() {
           placeholder="Email"
           value={email}
           onChange={e => setEmail(e.target.value)}
-          className="w-full px-3 py-2 border rounded"
+          className="login-input"
           autoComplete="email"
         />
         <input
@@ -198,9 +198,21 @@ export default function LoginPage() {
           placeholder="Password"
           value={password}
           onChange={e => setPassword(e.target.value)}
-          className="w-full px-3 py-2 border rounded"
+          className="login-input"
           autoComplete="current-password"
         />
+        
+        {/* Forgot password link moved below password field, right-aligned */}
+        <div className="text-right">
+          <button
+            type="button"
+            onClick={() => setShowForgotPassword(true)}
+            className="text-black hover:text-gray-700 underline text-sm"
+          >
+            Forgot password
+          </button>
+        </div>
+        
         {error && <p className="text-red-500">{error}</p>}
         <div className="flex gap-2">
           <button
@@ -211,19 +223,10 @@ export default function LoginPage() {
           </button>
           <button
             type="button"
-            className="bg-gray-300 px-4 py-2 rounded w-full hover:bg-gray-400"
+            className="bg-black px-4 py-2 rounded w-full hover:bg-gray-400"
             onClick={handleSignup}
           >
             Sign Up
-          </button>
-        </div>
-        <div className="text-center">
-          <button
-            type="button"
-            onClick={() => setShowForgotPassword(true)}
-            className="text-blue-600 hover:text-blue-800 underline text-sm"
-          >
-            Forgot Password?
           </button>
         </div>
       </form>

@@ -7,6 +7,9 @@ import Link from 'next/link'
 interface Exercise {
   id: string
   name: string
+  description?: string
+  external_link?: string
+  external_link_name?: string
   previousData?: {
     weight: number
     reps: number
@@ -84,6 +87,9 @@ export default function MuscleGroupSection({
             key={exercise.id}
             exerciseId={exercise.id}
             exerciseName={exercise.name}
+            description={exercise.description}
+            externalLink={exercise.external_link}
+            externalLinkName={exercise.external_link_name}
             previousData={exercise.previousData}
             onDataChange={handleExerciseDataChange}
           />

@@ -1,4 +1,4 @@
-import { pgTable, unique, pgPolicy, uuid, varchar, timestamp, foreignKey, check, integer, date, numeric, boolean, pgSchema } from "drizzle-orm/pg-core"
+import { pgTable, unique, pgPolicy, uuid, varchar, timestamp, foreignKey, check, integer, date, numeric, boolean, pgSchema, text } from "drizzle-orm/pg-core"
 import { sql } from "drizzle-orm"
 
 // Create auth schema reference
@@ -26,6 +26,9 @@ export const exercises = pgTable("exercises", {
 	muscleGroupId: uuid("muscle_group_id"),
 	userId: uuid("user_id"),
 	hidden: boolean().default(false).notNull(),
+	description: varchar({ length: 300 }),
+	externalLink: varchar("external_link", { length: 150 }),
+	externalLinkName: varchar("external_link_name", { length: 100 }),
 	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow(),
 }, (table) => [
 	foreignKey({

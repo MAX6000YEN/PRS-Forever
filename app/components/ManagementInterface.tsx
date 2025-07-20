@@ -14,6 +14,9 @@ interface Exercise {
   name: string
   muscle_group_id: string
   hidden: boolean
+  description?: string
+  external_link?: string
+  external_link_name?: string
   muscle_groups: {
     id: string
     name: string

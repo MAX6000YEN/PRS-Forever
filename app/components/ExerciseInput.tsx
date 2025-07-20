@@ -5,6 +5,9 @@ import { useState, useEffect } from 'react'
 interface ExerciseInputProps {
   exerciseId: string
   exerciseName: string
+  description?: string
+  externalLink?: string
+  externalLinkName?: string
   previousData?: {
     weight: number
     reps: number
@@ -16,6 +19,9 @@ interface ExerciseInputProps {
 export default function ExerciseInput({ 
   exerciseId, 
   exerciseName, 
+  description,
+  externalLink,
+  externalLinkName,
   previousData, 
   onDataChange 
 }: ExerciseInputProps) {
@@ -52,7 +58,24 @@ export default function ExerciseInput({
 
   return (
     <div className="block-bg rounded-lg p-4 mb-3">
-      <h4 className="text-white font-medium mb-3">{exerciseName}</h4>
+      <h4 className="text-white font-medium mb-2">{exerciseName}</h4>
+      
+      {/* Description */}
+      {description && (
+        <p className="text-gray-300 text-sm mb-2">{description}</p>
+      )}
+      
+      {/* External Link */}
+      {externalLink && externalLinkName && (
+        <a 
+          href={externalLink} 
+          target="_blank" 
+          rel="noopener noreferrer"
+          className="text-blue-400 hover:text-blue-300 text-sm underline block mb-3"
+        >
+          {externalLinkName}
+        </a>
+      )}
       
       <div className="grid grid-cols-3 gap-3 mb-3">
         <div>

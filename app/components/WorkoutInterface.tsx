@@ -7,6 +7,9 @@ import Toast from './Toast'
 interface Exercise {
   id: string
   name: string
+  description?: string
+  external_link?: string
+  external_link_name?: string
   previousData?: {
     weight: number
     reps: number

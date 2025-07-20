@@ -4,7 +4,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Funnel+Display:wght@300;400;500;600;700;800&display=swap');
 
 :root {
-  --background: #1F1335;
+  --background: linear-gradient(-45deg, #4b2e80 0%, #1f1335 100%);
   --foreground: #FFFFFF;
   --block-bg: rgba(0, 0, 0, 0.75);
 }
@@ -17,7 +17,8 @@
 }
 
 body {
-  background: var(--background);
+  background: linear-gradient(120deg, #4b2e80 0%, #1f1335 100%);
+  background-attachment: fixed;
   color: var(--foreground);
   font-family: 'Funnel Display', sans-serif;
   min-height: 100vh;
@@ -45,6 +46,26 @@ input[type="number"] {
 input[type="number"]:focus {
   outline: none;
   border-color: rgba(255, 255, 255, 0.5);
+}
+
+/* Login page specific input styling */
+.login-input {
+  background-color: #000000;
+  color: #FFFFFF;
+  border: none;
+  border-radius: 0.375rem;
+  padding: 0.75rem;
+  font-family: 'Funnel Display', sans-serif;
+  width: 100%;
+}
+
+.login-input:focus {
+  outline: none;
+  background-color: #000000;
+}
+
+.login-input::placeholder {
+  color: #888888;
 }
 
 /* Button styling */
