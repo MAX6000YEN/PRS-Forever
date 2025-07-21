@@ -1,6 +1,14 @@
 import "./globals.css";
 import { UserProvider } from './components/UserProvider'
 import ClientLayout from './components/ClientLayout'
+import { Funnel_Display } from 'next/font/google'
+
+const funnelDisplay = Funnel_Display({
+  subsets: ['latin'],
+  weight: ['300', '400', '500', '600', '700', '800'],
+  display: 'swap',
+  variable: '--font-funnel-display'
+})
 
 export const metadata = {
   title: "PRs Forever - Workout Tracker",
@@ -9,8 +17,8 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en" className="h-full">
-      <body className="antialiased h-full flex flex-col">
+    <html lang="en" className={`h-full ${funnelDisplay.variable}`}>
+      <body className={`antialiased h-full flex flex-col ${funnelDisplay.className}`}>
         <UserProvider>
           <ClientLayout>
             <main className="flex-1 flex flex-col">
