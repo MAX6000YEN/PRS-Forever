@@ -2,445 +2,411 @@
 
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { useRouter } from 'next/navigation'
-import { useUser } from '../components/UserProvider'
+import { User } from '@supabase/supabase-js'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 
-export default function SettingsPage() {
-  const router = useRouter()
-  const supabase = createClient()
-  const { user, username, updateUsername } = useUser()
+export default function AccountPage() {
+  const [user, setUser] = useState<User | null>(null)
+  const [loading, setLoading] = useState(true)
   
   // Form states
-  const [localUsername, setLocalUsername] = useState('')
+  const [username, setUsername] = useState('')
   const [email, setEmail] = useState('')
   const [currentPassword, setCurrentPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   
   // UI states
-  const [activeSection, setActiveSection] = useState<'profile' | 'password' | 'email' | 'data' | 'danger'>('profile')
-  const [error, setError] = useState<string | null>(null)
-  const [success, setSuccess] = useState<string | null>(null)
+  const [activeSection, setActiveSection] = useState('profile')
+  const [message, setMessage] = useState('')
+  const [messageType, setMessageType] = useState<'success' | 'error'>('success')
   const [isUpdating, setIsUpdating] = useState(false)
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
-  const [deleteConfirmText, setDeleteConfirmText] = useState('')
+  const [isExporting, setIsExporting] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
+
+  const supabase = createClient()
 
   useEffect(() => {
-    if (!user) {
-      router.push('/login')
-      return
+    const getUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        setUser(user)
+        setEmail(user.email || '')
+        setUsername(user.user_metadata?.username || '')
+      }
+      setLoading(false)
     }
+
+    getUser()
+  }, [supabase.auth])
+
+  const showMessage = (msg: string, type: 'success' | 'error' = 'success') => {
+    setMessage(msg)
+    setMessageType(type)
+    setTimeout(() => setMessage(''), 5000)
+  }
+
+  const updateProfile = async () => {
+    if (!user) return
     
-    setEmail(user.email || '')
-    setLocalUsername(username)
-  }, [user, username, router])
-
-  const clearMessages = () => {
-    setError(null)
-    setSuccess(null)
-  }
-
-  const handleUpdateProfile = async (e: React.FormEvent) => {
-    e.preventDefault()
-    clearMessages()
     setIsUpdating(true)
-
     try {
       const { error } = await supabase.auth.updateUser({
-        data: { username: localUsername }
+        data: { username }
       })
 
       if (error) throw error
-      
-      // Update the global username state
-      updateUsername(localUsername)
-      setSuccess('Username updated successfully!')
-    } catch (error: any) {
-      setError(error.message)
+      showMessage('Profile updated successfully!')
+    } catch (error) {
+      console.error('Error updating profile:', error)
+      showMessage('Error updating profile', 'error')
     } finally {
       setIsUpdating(false)
     }
   }
 
-  const handleUpdateEmail = async (e: React.FormEvent) => {
-    e.preventDefault()
-    clearMessages()
+  const updateEmail = async () => {
+    if (!user) return
+    
     setIsUpdating(true)
-
     try {
-      const { error } = await supabase.auth.updateUser({
-        email: email
-      })
-
-      if (error) throw error
+      const { error } = await supabase.auth.updateUser({ email })
       
-      setSuccess('Email update initiated! Please check your new email for confirmation.')
-    } catch (error: any) {
-      setError(error.message)
+      if (error) throw error
+      showMessage('Email update initiated! Check your new email for confirmation.')
+    } catch (error) {
+      console.error('Error updating email:', error)
+      showMessage('Error updating email', 'error')
     } finally {
       setIsUpdating(false)
     }
   }
 
-  const handleUpdatePassword = async (e: React.FormEvent) => {
-    e.preventDefault()
-    clearMessages()
-
+  const updatePassword = async () => {
     if (newPassword !== confirmPassword) {
-      setError('New passwords do not match')
+      showMessage('Passwords do not match', 'error')
       return
     }
 
     if (newPassword.length < 6) {
-      setError('Password must be at least 6 characters long')
+      showMessage('Password must be at least 6 characters', 'error')
       return
     }
 
     setIsUpdating(true)
-
     try {
-      // First verify current password by attempting to sign in
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email: user!.email!,
-        password: currentPassword
-      })
-
-      if (signInError) {
-        throw new Error('Current password is incorrect')
-      }
-
-      // Update password
       const { error } = await supabase.auth.updateUser({
         password: newPassword
       })
 
       if (error) throw error
       
-      setSuccess('Password updated successfully!')
       setCurrentPassword('')
       setNewPassword('')
       setConfirmPassword('')
-    } catch (error: any) {
-      setError(error.message)
+      showMessage('Password updated successfully!')
+    } catch (error) {
+      console.error('Error updating password:', error)
+      showMessage('Error updating password', 'error')
     } finally {
       setIsUpdating(false)
     }
   }
 
-  const handleExportData = async () => {
-    clearMessages()
-    setIsUpdating(true)
+  const exportData = async () => {
+    if (!user) return
 
+    setIsExporting(true)
     try {
-      // Get all user data from the database
-      const [userExercises, userWorkoutSchedule, userWorkoutSessions] = await Promise.all([
-        fetch('/api/user/exercises').then(res => res.json()).catch(() => []),
-        fetch('/api/user/workout-schedule').then(res => res.json()).catch(() => []),
-        fetch('/api/user/workout-sessions').then(res => res.json()).catch(() => [])
-      ])
-
-      const userData = {
-        profile: {
-          id: user!.id,
-          email: user!.email,
-          username: user!.user_metadata?.username,
-          created_at: user!.created_at
+      const response = await fetch('/api/export-data', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
         },
-        exercises: userExercises,
-        workoutSchedule: userWorkoutSchedule,
-        workoutSessions: userWorkoutSessions,
-        exportedAt: new Date().toISOString()
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to export data')
       }
 
-      // Create and download JSON file
-      const dataStr = JSON.stringify(userData, null, 2)
-      const dataBlob = new Blob([dataStr], { type: 'application/json' })
-      const url = URL.createObjectURL(dataBlob)
-      
-      const link = document.createElement('a')
-      link.href = url
-      link.download = `prs-forever-data-${new Date().toISOString().split('T')[0]}.json`
-      document.body.appendChild(link)
-      link.click()
-      document.body.removeChild(link)
-      URL.revokeObjectURL(url)
+      const blob = await response.blob()
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.style.display = 'none'
+      a.href = url
+      a.download = `workout-data-${new Date().toISOString().split('T')[0]}.json`
+      document.body.appendChild(a)
+      a.click()
+      window.URL.revokeObjectURL(url)
+      document.body.removeChild(a)
 
-      setSuccess('Data exported successfully!')
-    } catch (error: any) {
-      setError('Failed to export data: ' + error.message)
+      showMessage('Data exported successfully!')
+    } catch (error) {
+      console.error('Error exporting data:', error)
+      showMessage('Error exporting data', 'error')
     } finally {
-      setIsUpdating(false)
+      setIsExporting(false)
     }
   }
 
-  const handleDeleteAccount = async () => {
-    if (deleteConfirmText !== 'DELETE MY ACCOUNT') {
-      setError('Please type "DELETE MY ACCOUNT" to confirm')
-      return
-    }
+  const deleteAccount = async () => {
+    if (!user) return
 
-    clearMessages()
-    setIsUpdating(true)
+    const confirmed = window.confirm(
+      'Are you sure you want to delete your account? This action cannot be undone and will permanently delete all your data.'
+    )
 
+    if (!confirmed) return
+
+    setIsDeleting(true)
     try {
-      // Call the delete account API
-      const response = await fetch('/api/user/delete-account', {
+      const response = await fetch('/api/delete-account', {
         method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
       })
 
       if (!response.ok) {
         throw new Error('Failed to delete account')
       }
 
+      // Sign out the user
       await supabase.auth.signOut()
-      router.push('/login')
-    } catch (error: any) {
-      setError('Failed to delete account: ' + error.message)
+      
+      // Redirect to home page
+      window.location.href = '/'
+    } catch (error) {
+      console.error('Error deleting account:', error)
+      showMessage('Error deleting account', 'error')
     } finally {
-      setIsUpdating(false)
+      setIsDeleting(false)
     }
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-white text-xl">Loading...</div>
+      </div>
+    )
   }
 
   if (!user) {
     return (
-      <div className="mobile-container">
-        <div className="mobile-content flex items-center justify-center p-4">
-          <div className="text-white">Loading...</div>
-        </div>
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-white text-xl">Please log in to access your account settings.</div>
       </div>
     )
   }
 
   return (
-    <div className="mobile-container p-4">
-      <div className="mobile-content">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-white mb-2">Settings</h1>
-          <p className="text-lg text-gray-300">Manage your account preferences</p>
-        </div>
-
-        {/* Messages */}
-        {error && (
-          <div className="bg-red-600 text-white p-4 rounded-lg mb-6">
-            {error}
-          </div>
-        )}
+    <div className="min-h-screen p-4">
+      <div className="max-w-4xl mx-auto">
+        <h1 className="text-3xl font-bold text-white mb-8">Account Settings</h1>
         
-        {success && (
-          <div className="bg-green-600 text-white p-4 rounded-lg mb-6">
-            {success}
+        {/* Message Display */}
+        {message && (
+          <div className={`mb-6 p-4 rounded-lg ${
+            messageType === 'success' 
+              ? 'bg-green-500/20 border border-green-500/30 text-green-100' 
+              : 'bg-red-500/20 border border-red-500/30 text-red-100'
+          }`}>
+            {message}
           </div>
         )}
 
-        {/* Navigation Tabs */}
-        <div className="flex flex-wrap gap-2 mb-6">
-          {[
-            { key: 'profile', label: 'Profile' },
-            { key: 'email', label: 'Email' },
-            { key: 'password', label: 'Password' },
-            { key: 'data', label: 'Data' },
-            { key: 'danger', label: 'Danger Zone' }
-          ].map(({ key, label }) => (
-            <button
-              key={key}
-              onClick={() => setActiveSection(key as any)}
-              className={`px-4 py-2 rounded-lg transition-colors ${
-                activeSection === key
-                  ? 'bg-white text-black'
-                  : 'bg-gray-700 text-white hover:bg-gray-600'
-              }`}
+        <Tabs defaultValue="profile" className="w-full">
+          {/* Responsive TabsList - vertical on mobile, horizontal on desktop */}
+          <TabsList className="grid w-full grid-cols-2 md:grid-cols-5 h-auto md:h-9 gap-1 md:gap-0 p-1 bg-white/10 backdrop-blur-sm border border-white/20">
+            <TabsTrigger 
+              value="profile" 
+              className="text-xs md:text-sm px-2 md:px-3 py-2 md:py-1 data-[state=active]:bg-white/20 data-[state=active]:text-white text-white/70 hover:text-white transition-colors"
             >
-              {label}
-            </button>
-          ))}
-        </div>
+              Profile
+            </TabsTrigger>
+            <TabsTrigger 
+              value="email" 
+              className="text-xs md:text-sm px-2 md:px-3 py-2 md:py-1 data-[state=active]:bg-white/20 data-[state=active]:text-white text-white/70 hover:text-white transition-colors"
+            >
+              Email
+            </TabsTrigger>
+            <TabsTrigger 
+              value="password" 
+              className="text-xs md:text-sm px-2 md:px-3 py-2 md:py-1 data-[state=active]:bg-white/20 data-[state=active]:text-white text-white/70 hover:text-white transition-colors"
+            >
+              Password
+            </TabsTrigger>
+            <TabsTrigger 
+              value="data" 
+              className="text-xs md:text-sm px-2 md:px-3 py-2 md:py-1 data-[state=active]:bg-white/20 data-[state=active]:text-white text-white/70 hover:text-white transition-colors"
+            >
+              Your data
+            </TabsTrigger>
+            <TabsTrigger 
+              value="danger" 
+              className="text-xs md:text-sm px-2 md:px-3 py-2 md:py-1 data-[state=active]:bg-white/20 data-[state=active]:text-white text-white/70 hover:text-white transition-colors col-span-2 md:col-span-1"
+            >
+              Delete account
+            </TabsTrigger>
+          </TabsList>
 
-        {/* Profile Section */}
-        {activeSection === 'profile' && (
-          <div className="block-bg rounded-lg p-6">
-            <h2 className="text-2xl font-bold text-white mb-4">Profile Information</h2>
-            <form onSubmit={handleUpdateProfile} className="space-y-4">
-              <div>
-                <label className="block text-sm text-gray-300 mb-2">Username</label>
-                <input
-                  type="text"
-                  value={localUsername}
-                  onChange={(e) => setLocalUsername(e.target.value)}
-                  className="w-full px-3 py-2 bg-gray-800 text-white border border-gray-600 rounded-lg focus:border-white focus:outline-none"
-                  placeholder="Enter your username"
-                />
-              </div>
-              <button
-                type="submit"
-                disabled={isUpdating}
-                className="btn-primary disabled:opacity-50"
-              >
-                {isUpdating ? 'Updating...' : 'Update Profile'}
-              </button>
-            </form>
-          </div>
-        )}
-
-        {/* Email Section */}
-        {activeSection === 'email' && (
-          <div className="block-bg rounded-lg p-6">
-            <h2 className="text-2xl font-bold text-white mb-4">Email Address</h2>
-            <form onSubmit={handleUpdateEmail} className="space-y-4">
-              <div>
-                <label className="block text-sm text-gray-300 mb-2">Current Email</label>
-                <input
-                  type="text"
-                  value={user?.email || ''}
-                  disabled
-                  className="w-full px-3 py-2 bg-gray-900 text-gray-400 border border-gray-600 rounded-lg"
-                />
-              </div>
-              <div>
-                <label className="block text-sm text-gray-300 mb-2">New Email</label>
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="w-full px-3 py-2 bg-gray-800 text-white border border-gray-600 rounded-lg focus:border-white focus:outline-none"
-                  placeholder="Enter new email address"
-                />
-              </div>
-              <p className="text-sm text-gray-400">
-                You&apos;ll receive a confirmation email at your new address.
-              </p>
-              <button
-                type="submit"
-                disabled={isUpdating || email === user?.email}
-                className="btn-primary disabled:opacity-50"
-              >
-                {isUpdating ? 'Updating...' : 'Update Email'}
-              </button>
-            </form>
-          </div>
-        )}
-
-        {/* Password Section */}
-        {activeSection === 'password' && (
-          <div className="block-bg rounded-lg p-6">
-            <h2 className="text-2xl font-bold text-white mb-4">Change Password</h2>
-            <form onSubmit={handleUpdatePassword} className="space-y-4">
-              <div>
-                <label className="block text-sm text-gray-300 mb-2">Current Password</label>
-                <input
-                  type="password"
-                  value={currentPassword}
-                  onChange={(e) => setCurrentPassword(e.target.value)}
-                  className="w-full px-3 py-2 bg-gray-800 text-white border border-gray-600 rounded-lg focus:border-white focus:outline-none"
-                  placeholder="Enter current password"
-                />
-              </div>
-              <div>
-                <label className="block text-sm text-gray-300 mb-2">New Password</label>
-                <input
-                  type="password"
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  className="w-full px-3 py-2 bg-gray-800 text-white border border-gray-600 rounded-lg focus:border-white focus:outline-none"
-                  placeholder="Enter new password"
-                />
-              </div>
-              <div>
-                <label className="block text-sm text-gray-300 mb-2">Confirm New Password</label>
-                <input
-                  type="password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="w-full px-3 py-2 bg-gray-800 text-white border border-gray-600 rounded-lg focus:border-white focus:outline-none"
-                  placeholder="Confirm new password"
-                />
-              </div>
-              <button
-                type="submit"
-                disabled={isUpdating || !currentPassword || !newPassword || !confirmPassword}
-                className="btn-primary disabled:opacity-50"
-              >
-                {isUpdating ? 'Updating...' : 'Update Password'}
-              </button>
-            </form>
-          </div>
-        )}
-
-        {/* Data Section */}
-        {activeSection === 'data' && (
-          <div className="block-bg rounded-lg p-6">
-            <h2 className="text-2xl font-bold text-white mb-4">Your Data</h2>
-            <div className="space-y-4">
-              <p className="text-gray-300">
-                Download all your workout data, including exercises, schedules, and session history.
-              </p>
-              <button
-                onClick={handleExportData}
-                disabled={isUpdating}
-                className="btn-primary disabled:opacity-50"
-              >
-                {isUpdating ? 'Exporting...' : 'Export My Data'}
-              </button>
-              <p className="text-sm text-gray-400">
-                Data will be downloaded as a JSON file containing all your information.
-              </p>
-            </div>
-          </div>
-        )}
-
-        {/* Danger Zone */}
-        {activeSection === 'danger' && (
-          <div className="block-bg rounded-lg p-6 border-2 border-red-600">
-            <h2 className="text-2xl font-bold text-red-400 mb-4">Danger Zone</h2>
-            <div className="space-y-4">
-              <p className="text-gray-300">
-                Permanently delete your account and all associated data. This action cannot be undone.
-              </p>
-              
-              {!showDeleteConfirm ? (
-                <button
-                  onClick={() => setShowDeleteConfirm(true)}
-                  className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors"
-                >
-                  Delete Account
-                </button>
-              ) : (
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm text-gray-300 mb-2">
-                      Type "DELETE MY ACCOUNT" to confirm:
-                    </label>
-                    <input
-                      type="text"
-                      value={deleteConfirmText}
-                      onChange={(e) => setDeleteConfirmText(e.target.value)}
-                      className="w-full px-3 py-2 bg-gray-800 text-white border border-gray-600 rounded-lg focus:border-red-400 focus:outline-none"
-                      placeholder="DELETE MY ACCOUNT"
-                    />
-                  </div>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={handleDeleteAccount}
-                      disabled={isUpdating || deleteConfirmText !== 'DELETE MY ACCOUNT'}
-                      className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors disabled:opacity-50"
-                    >
-                      {isUpdating ? 'Deleting...' : 'Confirm Delete'}
-                    </button>
-                    <button
-                      onClick={() => {
-                        setShowDeleteConfirm(false)
-                        setDeleteConfirmText('')
-                      }}
-                      className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg transition-colors"
-                    >
-                      Cancel
-                    </button>
-                  </div>
+          {/* Profile Tab */}
+          <TabsContent value="profile">
+            <Card className="glass-card border-white/20">
+              <CardHeader>
+                <CardTitle className="text-white">Profile Information</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="username" className="text-white">Username</Label>
+                  <Input
+                    id="username"
+                    type="text"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    className="glass-input"
+                    placeholder="Enter your username"
+                  />
                 </div>
-              )}
-            </div>
-          </div>
-        )}
+                <Button 
+                  onClick={updateProfile}
+                  disabled={isUpdating}
+                  className="w-full"
+                >
+                  {isUpdating ? 'Updating...' : 'Update Profile'}
+                </Button>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Email Tab */}
+          <TabsContent value="email">
+            <Card className="glass-card border-white/20">
+              <CardHeader>
+                <CardTitle className="text-white">Email Settings</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="email" className="text-white">Email Address</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="glass-input"
+                    placeholder="Enter your email"
+                  />
+                </div>
+                <Button 
+                  onClick={updateEmail}
+                  disabled={isUpdating}
+                  className="w-full"
+                >
+                  {isUpdating ? 'Updating...' : 'Update Email'}
+                </Button>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Password Tab */}
+          <TabsContent value="password">
+            <Card className="glass-card border-white/20">
+              <CardHeader>
+                <CardTitle className="text-white">Change Password</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="current-password" className="text-white">Current Password</Label>
+                  <Input
+                    id="current-password"
+                    type="password"
+                    value={currentPassword}
+                    onChange={(e) => setCurrentPassword(e.target.value)}
+                    className="glass-input"
+                    placeholder="Enter current password"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="new-password" className="text-white">New Password</Label>
+                  <Input
+                    id="new-password"
+                    type="password"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    className="glass-input"
+                    placeholder="Enter new password"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="confirm-password" className="text-white">Confirm New Password</Label>
+                  <Input
+                    id="confirm-password"
+                    type="password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    className="glass-input"
+                    placeholder="Confirm new password"
+                  />
+                </div>
+                <Button 
+                  onClick={updatePassword}
+                  disabled={isUpdating}
+                  className="w-full"
+                >
+                  {isUpdating ? 'Updating...' : 'Update Password'}
+                </Button>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Data Tab */}
+          <TabsContent value="data">
+            <Card className="glass-card border-white/20">
+              <CardHeader>
+                <CardTitle className="text-white">Your Data</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <p className="text-white/80">
+                  Export all your workout data, including exercises, muscle groups, and workout history.
+                </p>
+                <Button 
+                  onClick={exportData}
+                  disabled={isExporting}
+                  className="w-full"
+                >
+                  {isExporting ? 'Exporting...' : 'Export Data'}
+                </Button>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Danger Zone Tab */}
+          <TabsContent value="danger">
+            <Card className="glass-card border-red-500/30">
+              <CardHeader>
+                <CardTitle className="text-red-400">Delete Account</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <p className="text-white/80">
+                  Permanently delete your account and all associated data. This action cannot be undone.
+                </p>
+                <Button 
+                  onClick={deleteAccount}
+                  disabled={isDeleting}
+                  variant="destructive"
+                  className="w-full"
+                >
+                  {isDeleting ? 'Deleting...' : 'Delete Account'}
+                </Button>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   )

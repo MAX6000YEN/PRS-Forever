@@ -3,8 +3,8 @@
 import { useState, useCallback } from 'react'
 import MuscleGroupSection from './MuscleGroupSection'
 import Toast from './Toast'
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
 
 interface Exercise {
   id: string
@@ -51,8 +51,6 @@ export default function WorkoutInterface({ workoutData, userId, currentDate }: W
   }, [])
 
   const totalWorkoutWeight = Object.values(muscleGroupTotals).reduce((sum, total) => sum + total, 0)
-
-  const muscleGroupsText = workoutData.map(data => data.muscleGroup).join(' and ')
 
   // Calculate total number of exercises across all muscle groups
   const totalExercises = workoutData.reduce((total, data) => total + data.exercises.length, 0)
@@ -104,13 +102,21 @@ export default function WorkoutInterface({ workoutData, userId, currentDate }: W
         />
       )}
 
-      {/* Today's muscle groups */}
+      {/* Today's muscle groups with badges */}
       {workoutData.length > 0 && (
         <div className="mb-6">
-          <p className="text-lg text-white/80">
-            <span className="text-white font-medium">Today's focus: </span>
-            {muscleGroupsText}
-          </p>
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-lg text-white font-medium">Today's focus:</span>
+            {workoutData.map((data, index) => (
+              <Badge 
+                key={data.muscleGroup} 
+                variant="secondary"
+                className="text-sm capitalize bg-white/20 text-white border-white/30 hover:bg-white/30"
+              >
+                {data.muscleGroup}
+              </Badge>
+            ))}
+          </div>
         </div>
       )}
 
@@ -127,21 +133,16 @@ export default function WorkoutInterface({ workoutData, userId, currentDate }: W
         ))}
       </div>
 
-      {/* Total workout weight - Show as soon as there are muscle groups scheduled */}
+      {/* Total workout weight and save button - Show as soon as there are muscle groups scheduled */}
       {workoutData.length > 0 && (
-        <Card className="mt-6">
-          <CardHeader>
-            <div className="flex justify-between items-center">
-              <CardTitle>Total Workout</CardTitle>
-              <span className="text-2xl font-bold text-white">{totalWorkoutWeight.toFixed(1)} kg</span>
-            </div>
-          </CardHeader>
-        </Card>
-      )}
-
-      {/* Save button - Show as soon as there are muscle groups scheduled, but disable until all fields are filled */}
-      {workoutData.length > 0 && (
-        <div className="mt-6 text-center">
+        <div className="mt-8 text-center space-y-4">
+          {/* Total Workout text without card */}
+          <div className="flex justify-between items-center text-xl font-bold text-white">
+            <span>Total Workout</span>
+            <span>{totalWorkoutWeight.toFixed(1)} kg</span>
+          </div>
+          
+          {/* Save button */}
           <Button
             onClick={saveWorkout}
             disabled={isSaving || !allExercisesFilled}

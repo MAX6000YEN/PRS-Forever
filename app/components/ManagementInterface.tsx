@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import MuscleGroupsTab from './MuscleGroupsTab'
 import ExercisesTab from './ExercisesTab'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 interface MuscleGroup {
   id: string
@@ -46,51 +47,30 @@ export default function ManagementInterface({
   workoutSchedule, 
   userId 
 }: ManagementInterfaceProps) {
-  const [activeTab, setActiveTab] = useState<'muscle-groups' | 'exercises'>('muscle-groups')
-
   return (
     <div>
-      {/* Tab Navigation */}
-      <div className="flex mb-6">
-        <button
-          onClick={() => setActiveTab('muscle-groups')}
-          className={`px-6 py-3 rounded-t-lg font-medium transition-colors ${
-            activeTab === 'muscle-groups'
-              ? 'bg-black bg-opacity-75 text-white border-b-2 border-white'
-              : 'bg-black bg-opacity-50 text-gray-300 hover:text-white'
-          }`}
-        >
-          Muscle Groups
-        </button>
-        <button
-          onClick={() => setActiveTab('exercises')}
-          className={`px-6 py-3 rounded-t-lg font-medium transition-colors ml-2 ${
-            activeTab === 'exercises'
-              ? 'bg-black bg-opacity-75 text-white border-b-2 border-white'
-              : 'bg-black bg-opacity-50 text-gray-300 hover:text-white'
-          }`}
-        >
-          Exercises
-        </button>
-      </div>
-
-      {/* Tab Content */}
-      <div className="block-bg rounded-lg p-6">
-        {activeTab === 'muscle-groups' && (
+      <Tabs defaultValue="muscle-groups" className="w-full">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="muscle-groups">Muscle Groups</TabsTrigger>
+          <TabsTrigger value="exercises">Exercises</TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="muscle-groups" className="mt-6">
           <MuscleGroupsTab 
             muscleGroups={muscleGroups}
             workoutSchedule={workoutSchedule}
             userId={userId}
           />
-        )}
-        {activeTab === 'exercises' && (
+        </TabsContent>
+        
+        <TabsContent value="exercises" className="mt-6">
           <ExercisesTab 
             muscleGroups={muscleGroups}
             exercises={exercises}
             userId={userId}
           />
-        )}
-      </div>
+        </TabsContent>
+      </Tabs>
     </div>
   )
 }

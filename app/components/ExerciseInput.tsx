@@ -1,6 +1,9 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 
 interface ExerciseInputProps {
   exerciseId: string
@@ -57,7 +60,7 @@ export default function ExerciseInput({
   }
 
   return (
-    <div className="block-bg rounded-lg p-4 mb-3">
+    <div className="glass rounded-lg p-4 mb-3">
       <h4 className="text-white font-medium mb-2">{exerciseName}</h4>
       
       {/* Description */}
@@ -67,26 +70,33 @@ export default function ExerciseInput({
       
       {/* External Link */}
       {externalLink && externalLinkName && (
-        <a 
-          href={externalLink} 
-          target="_blank" 
-          rel="noopener noreferrer"
-          className="text-blue-400 hover:text-blue-300 text-sm underline block mb-3"
-        >
-          {externalLinkName}
-        </a>
+        <div className="mb-3">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            asChild
+          >
+            <a 
+              href={externalLink} 
+              target="_blank" 
+              rel="noopener noreferrer"
+            >
+              {externalLinkName}
+            </a>
+          </Button>
+        </div>
       )}
       
       <div className="grid grid-cols-3 gap-3 mb-3">
         <div>
-          <label className="block text-sm text-gray-300 mb-1">Weight (kg)</label>
-          <input
+          <Label className="text-sm text-gray-300 mb-1">Weight (kg)</Label>
+          <Input
             type="number"
             inputMode="numeric"
             value={weight}
             onChange={(e) => handleNumberInput(e.target.value, setWeight)}
             placeholder="?"
-            className="w-full text-center"
+            className="text-center"
             min="1"
             max="2900"
             step="0.5"
@@ -94,28 +104,28 @@ export default function ExerciseInput({
         </div>
         
         <div>
-          <label className="block text-sm text-gray-300 mb-1">Reps</label>
-          <input
+          <Label className="text-sm text-gray-300 mb-1">Reps</Label>
+          <Input
             type="number"
             inputMode="numeric"
             value={reps}
             onChange={(e) => handleNumberInput(e.target.value, setReps)}
             placeholder="?"
-            className="w-full text-center"
+            className="text-center"
             min="1"
             max="2900"
           />
         </div>
         
         <div>
-          <label className="block text-sm text-gray-300 mb-1">Sets</label>
-          <input
+          <Label className="text-sm text-gray-300 mb-1">Sets</Label>
+          <Input
             type="number"
             inputMode="numeric"
             value={sets}
             onChange={(e) => handleNumberInput(e.target.value, setSets)}
             placeholder="?"
-            className="w-full text-center"
+            className="text-center"
             min="1"
             max="2900"
           />

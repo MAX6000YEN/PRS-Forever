@@ -2,6 +2,9 @@
 
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
 
 interface MuscleGroup {
   id: string
@@ -52,7 +55,7 @@ export default function MuscleGroupsTab({
     // Add today first if it exists in our array
     if (todayIndex !== -1) {
       orderedDays.push({ 
-        name: `${todayName} (Today)`, 
+        name: todayName, 
         index: dayIndexMap[todayIndex], 
         isToday: true 
       })
@@ -181,47 +184,49 @@ export default function MuscleGroupsTab({
         {orderedDays.map((day) => {
           const dayOfWeek = day.index
           return (
-            <div key={`${dayOfWeek}-${day.isToday ? 'today' : 'regular'}`} className={`border rounded-lg p-4 ${
-              day.isToday ? 'border-blue-500 bg-blue-900 bg-opacity-20' : 'border-gray-600'
-            }`}>
-              <div className="flex justify-between items-center mb-4">
-                <div>
-                  <h3 className={`text-xl font-semibold ${day.isToday ? 'text-blue-300' : 'text-white'}`}>
+            <Card key={`${dayOfWeek}-${day.isToday ? 'today' : 'regular'}`} className={day.isToday ? 'border-blue-500' : ''}>
+              <CardHeader>
+                <div className="flex items-center gap-2">
+                  <CardTitle className="text-xl">
                     {day.name}
-                  </h3>
-                  {day.isSecondToday && (
-                    <p className="text-sm text-gray-400 mt-1">
-                      Today is {dayNames[dayIndexMap.findIndex(dayIndex => dayIndex === currentDayOfWeek)]}, find it at the top of the page
-                    </p>
+                  </CardTitle>
+                  {day.isToday && (
+                    <Badge variant="secondary">Today</Badge>
                   )}
                 </div>
-                <button
-                  onClick={() => handleNoWorkoutDay(dayOfWeek)}
-                  disabled={isLoading}
-                  className="px-3 py-1 bg-red-600 text-white rounded text-sm hover:bg-red-500 disabled:opacity-50"
-                >
-                  No workout this day
-                </button>
-              </div>
-
-              {/* Muscle group toggles */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                {muscleGroups.map(muscleGroup => (
-                  <button
-                    key={muscleGroup.id}
-                    onClick={() => handleMuscleGroupToggle(dayOfWeek, muscleGroup.id)}
+                {day.isSecondToday && (
+                  <p className="text-sm text-gray-400 mt-1">
+                    Today is {dayNames[dayIndexMap.findIndex(dayIndex => dayIndex === currentDayOfWeek)]}, find it at the top of the page
+                  </p>
+                )}
+              </CardHeader>
+              <CardContent>
+                {/* Muscle group toggles with "No workout this day" button included */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                  {muscleGroups.map(muscleGroup => (
+                    <Button
+                      key={muscleGroup.id}
+                      onClick={() => handleMuscleGroupToggle(dayOfWeek, muscleGroup.id)}
+                      disabled={isLoading}
+                      variant={isMuscleGroupScheduled(dayOfWeek, muscleGroup.id) ? "default" : "outline"}
+                      className="capitalize"
+                    >
+                      {muscleGroup.name}
+                    </Button>
+                  ))}
+                  
+                  {/* No workout this day button */}
+                  <Button
+                    onClick={() => handleNoWorkoutDay(dayOfWeek)}
                     disabled={isLoading}
-                    className={`p-3 rounded-lg text-sm font-medium transition-colors capitalize ${
-                      isMuscleGroupScheduled(dayOfWeek, muscleGroup.id)
-                        ? 'bg-green-600 text-white'
-                        : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                    } ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    variant="destructive"
+                    className="col-span-2 md:col-span-1"
                   >
-                    {muscleGroup.name}
-                  </button>
-                ))}
-              </div>
-            </div>
+                    Deselect all muscle groups
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
           )
         })}
       </div>
