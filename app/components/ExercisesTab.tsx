@@ -2,6 +2,11 @@
 
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Badge } from "@/components/ui/badge"
 
 interface MuscleGroup {
   id: string
@@ -212,285 +217,305 @@ export default function ExercisesTab({
   }
 
   return (
-    <div>
-      <div className="flex justify-between items-center mb-6">
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold text-white">Exercises</h2>
-        <button
-          onClick={() => setShowAddForm(true)}
-          className="btn-primary"
-        >
+        <Button onClick={() => setShowAddForm(true)}>
           Add Exercise
-        </button>
+        </Button>
       </div>
 
       {/* Add Exercise Form */}
       {showAddForm && (
-        <div className="bg-gray-800 rounded-lg p-6 mb-6">
-          <h3 className="text-xl font-semibold text-white mb-4">Add New Exercise</h3>
-          <form onSubmit={handleAddExercise} className="space-y-4">
-            <div>
-              <label className="block text-sm text-gray-300 mb-2">Exercise Name</label>
-              <input
-                type="text"
-                value={newExercise.name}
-                onChange={(e) => setNewExercise(prev => ({ ...prev, name: e.target.value }))}
-                className="w-full p-3 bg-black bg-opacity-75 text-white rounded-lg border border-gray-600 focus:border-white"
-                placeholder="Enter exercise name"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-sm text-gray-300 mb-2">Muscle Group</label>
-              <select
-                value={newExercise.muscle_group_id}
-                onChange={(e) => setNewExercise(prev => ({ ...prev, muscle_group_id: e.target.value }))}
-                className="w-full p-3 bg-black bg-opacity-75 text-white rounded-lg border border-gray-600 focus:border-white"
-                required
-              >
-                <option value="">Select muscle group</option>
-                {muscleGroups.map(mg => (
-                  <option key={mg.id} value={mg.id} className="capitalize">
-                    {mg.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm text-gray-300 mb-2">Description (optional, max 300 characters)</label>
-              <textarea
-                value={newExercise.description}
-                onChange={(e) => setNewExercise(prev => ({ ...prev, description: e.target.value }))}
-                className="w-full p-3 bg-black bg-opacity-75 text-white rounded-lg border border-gray-600 focus:border-white resize-none"
-                placeholder="Enter exercise description"
-                maxLength={300}
-                rows={3}
-              />
-              <div className="text-xs text-gray-400 mt-1">
-                {newExercise.description.length}/300 characters
+        <Card className="p-2">
+          <CardHeader>
+            <CardTitle className="text-white">Add New Exercise</CardTitle>
+          </CardHeader>
+          <CardContent className="p-2">
+            <form onSubmit={handleAddExercise} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="exercise-name" className="text-white">Exercise Name</Label>
+                <Input
+                  id="exercise-name"
+                  type="text"
+                  value={newExercise.name}
+                  onChange={(e) => setNewExercise(prev => ({ ...prev, name: e.target.value }))}
+                  placeholder="Enter exercise name"
+                  required
+                  className="bg-black/20 border-white/20 text-white placeholder:text-white/50"
+                />
               </div>
-            </div>
-            <div>
-              <label className="block text-sm text-gray-300 mb-2">External Link Name (optional)</label>
-              <input
-                type="text"
-                value={newExercise.external_link_name}
-                onChange={(e) => setNewExercise(prev => ({ ...prev, external_link_name: e.target.value }))}
-                className="w-full p-3 bg-black bg-opacity-75 text-white rounded-lg border border-gray-600 focus:border-white"
-                placeholder="e.g., 'Tutorial Video', 'Form Guide'"
-                maxLength={100}
-              />
-            </div>
-            <div>
-              <label className="block text-sm text-gray-300 mb-2">External Link (optional, max 150 characters)</label>
-              <input
-                type="url"
-                value={newExercise.external_link}
-                onChange={(e) => setNewExercise(prev => ({ ...prev, external_link: e.target.value }))}
-                className="w-full p-3 bg-black bg-opacity-75 text-white rounded-lg border border-gray-600 focus:border-white"
-                placeholder="https://example.com"
-                maxLength={150}
-              />
-              <div className="text-xs text-gray-400 mt-1">
-                {newExercise.external_link.length}/150 characters
+              
+              <div className="space-y-2">
+                <Label htmlFor="muscle-group" className="text-white">Muscle Group</Label>
+                <select
+                  id="muscle-group"
+                  value={newExercise.muscle_group_id}
+                  onChange={(e) => setNewExercise(prev => ({ ...prev, muscle_group_id: e.target.value }))}
+                  className="w-full p-3 bg-black/20 border border-white/20 rounded-md text-white"
+                  required
+                >
+                  <option value="">Select muscle group</option>
+                  {muscleGroups.map(mg => (
+                    <option key={mg.id} value={mg.id} className="capitalize bg-black">
+                      {mg.name}
+                    </option>
+                  ))}
+                </select>
               </div>
-            </div>
-            <div className="flex flex-col sm:flex-row gap-3">
-              <button
-                type="submit"
-                disabled={isLoading}
-                className="btn-primary"
-              >
-                {isLoading ? 'Adding...' : 'Add Exercise'}
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setShowAddForm(false)
-                  setNewExercise({ 
-                    name: '', 
-                    muscle_group_id: '', 
-                    description: '', 
-                    external_link: '', 
-                    external_link_name: '' 
-                  })
-                }}
-                className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-500"
-              >
-                Cancel
-              </button>
-            </div>
-          </form>
-        </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="description" className="text-white">Description (optional, max 300 characters)</Label>
+                <textarea
+                  id="description"
+                  value={newExercise.description}
+                  onChange={(e) => setNewExercise(prev => ({ ...prev, description: e.target.value }))}
+                  className="w-full p-3 bg-black/20 border border-white/20 rounded-md text-white placeholder:text-white/50 resize-none"
+                  placeholder="Enter exercise description"
+                  maxLength={300}
+                  rows={3}
+                />
+                <div className="text-xs text-gray-400">
+                  {newExercise.description.length}/300 characters
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="link-name" className="text-white">External Link Name (optional)</Label>
+                <Input
+                  id="link-name"
+                  type="text"
+                  value={newExercise.external_link_name}
+                  onChange={(e) => setNewExercise(prev => ({ ...prev, external_link_name: e.target.value }))}
+                  placeholder="e.g., 'Tutorial Video', 'Form Guide'"
+                  maxLength={100}
+                  className="bg-black/20 border-white/20 text-white placeholder:text-white/50"
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="external-link" className="text-white">External Link (optional, max 150 characters)</Label>
+                <Input
+                  id="external-link"
+                  type="url"
+                  value={newExercise.external_link}
+                  onChange={(e) => setNewExercise(prev => ({ ...prev, external_link: e.target.value }))}
+                  placeholder="https://example.com"
+                  maxLength={150}
+                  className="bg-black/20 border-white/20 text-white placeholder:text-white/50"
+                />
+                <div className="text-xs text-gray-400">
+                  {newExercise.external_link.length}/150 characters
+                </div>
+              </div>
+              
+              <div className="flex flex-col sm:flex-row gap-3">
+                <Button type="submit" disabled={isLoading}>
+                  {isLoading ? 'Adding...' : 'Add Exercise'}
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    setShowAddForm(false)
+                    setNewExercise({ 
+                      name: '', 
+                      muscle_group_id: '', 
+                      description: '', 
+                      external_link: '', 
+                      external_link_name: '' 
+                    })
+                  }}
+                >
+                  Cancel
+                </Button>
+              </div>
+            </form>
+          </CardContent>
+        </Card>
       )}
 
       {/* Exercises List */}
       <div className="space-y-6">
         {Object.entries(exercisesByMuscleGroup).map(([muscleGroupName, groupExercises]) => (
-          <div key={muscleGroupName} className="border border-gray-600 rounded-lg p-4">
-            <h3 className="text-xl font-semibold text-white mb-4 capitalize">{muscleGroupName}</h3>
-            <div className="space-y-3">
-              {groupExercises.map(exercise => (
-                <div 
-                  key={exercise.id} 
-                  className={`bg-gray-800 rounded-lg p-3 transition-opacity ${
-                    exercise.hidden ? 'opacity-50' : 'opacity-100'
-                  }`}
-                >
-                  {editingExercise?.id === exercise.id ? (
-                    <form onSubmit={handleUpdateExercise} className="space-y-3">
-                      <div>
-                        <label className="block text-sm text-gray-300 mb-1">Exercise Name</label>
-                        <input
-                          type="text"
-                          value={editingExercise.name}
-                          onChange={(e) => setEditingExercise(prev => prev ? { ...prev, name: e.target.value } : null)}
-                          className="w-full p-2 bg-black bg-opacity-75 text-white rounded border border-gray-600 focus:border-white"
-                          required
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm text-gray-300 mb-1">Muscle Group</label>
-                        <select
-                          value={editingExercise.muscle_group_id}
-                          onChange={(e) => setEditingExercise(prev => prev ? { ...prev, muscle_group_id: e.target.value } : null)}
-                          className="w-full p-2 bg-black bg-opacity-75 text-white rounded border border-gray-600 focus:border-white"
-                          required
-                        >
-                          {muscleGroups.map(mg => (
-                            <option key={mg.id} value={mg.id} className="capitalize">
-                              {mg.name}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                      <div>
-                        <label className="block text-sm text-gray-300 mb-1">Description (max 300 characters)</label>
-                        <textarea
-                          value={editingExercise.description || ''}
-                          onChange={(e) => setEditingExercise(prev => prev ? { ...prev, description: e.target.value } : null)}
-                          className="w-full p-2 bg-black bg-opacity-75 text-white rounded border border-gray-600 focus:border-white resize-none"
-                          maxLength={300}
-                          rows={3}
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm text-gray-300 mb-1">External Link Name</label>
-                        <input
-                          type="text"
-                          value={editingExercise.external_link_name || ''}
-                          onChange={(e) => setEditingExercise(prev => prev ? { ...prev, external_link_name: e.target.value } : null)}
-                          className="w-full p-2 bg-black bg-opacity-75 text-white rounded border border-gray-600 focus:border-white"
-                          maxLength={100}
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm text-gray-300 mb-1">External Link (max 150 characters)</label>
-                        <input
-                          type="url"
-                          value={editingExercise.external_link || ''}
-                          onChange={(e) => setEditingExercise(prev => prev ? { ...prev, external_link: e.target.value } : null)}
-                          className="w-full p-2 bg-black bg-opacity-75 text-white rounded border border-gray-600 focus:border-white"
-                          maxLength={150}
-                        />
-                      </div>
-                      <div className="flex flex-col sm:flex-row gap-2">
-                        <button 
-                          type="submit" 
-                          disabled={isLoading}
-                          className="px-3 py-2 bg-green-600 text-white rounded text-sm hover:bg-green-500 disabled:opacity-50"
-                        >
-                          {isLoading ? 'Saving...' : 'Save'}
-                        </button>
-                        <button 
-                          type="button"
-                          onClick={() => setEditingExercise(null)}
-                          className="px-3 py-2 bg-gray-600 text-white rounded text-sm hover:bg-gray-500"
-                        >
-                          Cancel
-                        </button>
-                      </div>
-                    </form>
-                  ) : (
-                    <div className="space-y-2">
-                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                        <span className={`font-medium ${exercise.hidden ? 'text-gray-400' : 'text-white'}`}>
-                          {exercise.name}
-                          {exercise.hidden && <span className="text-xs text-gray-500 ml-2">(Hidden)</span>}
-                        </span>
-                        <div className="flex gap-2">
-                          <button
-                            onClick={() => setEditingExercise(exercise)}
-                            className="px-3 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-500"
-                          >
-                            Edit
-                          </button>
-                          <button
-                            onClick={() => handleToggleHidden(exercise.id, exercise.hidden)}
-                            disabled={isLoading}
-                            className={`px-3 py-1 rounded text-sm transition-colors disabled:opacity-50 ${
-                              exercise.hidden 
-                                ? 'bg-green-600 hover:bg-green-500 text-white' 
-                                : 'bg-yellow-600 hover:bg-yellow-500 text-white'
-                            }`}
-                          >
-                            {exercise.hidden ? 'Show' : 'Hide'}
-                          </button>
-                          <button
-                            onClick={() => setDeleteConfirm(exercise.id)}
-                            className="px-3 py-1 bg-red-600 text-white rounded text-sm hover:bg-red-500"
-                          >
-                            Delete
-                          </button>
+          <Card key={muscleGroupName} className="p-2">
+            <CardHeader>
+              <CardTitle className="text-white capitalize">{muscleGroupName}</CardTitle>
+            </CardHeader>
+            <CardContent className="p-2">
+              <div className="space-y-3">
+                {groupExercises.map(exercise => (
+                  <Card 
+                    key={exercise.id} 
+                    className={`p-2 transition-opacity ${
+                      exercise.hidden ? 'opacity-50' : 'opacity-100'
+                    }`}
+                  >
+                    <CardContent className="p-2">
+                      {editingExercise?.id === exercise.id ? (
+                        <form onSubmit={handleUpdateExercise} className="space-y-3">
+                          <div className="space-y-2">
+                            <Label className="text-white">Exercise Name</Label>
+                            <Input
+                              type="text"
+                              value={editingExercise.name}
+                              onChange={(e) => setEditingExercise(prev => prev ? { ...prev, name: e.target.value } : null)}
+                              className="bg-black/20 border-white/20 text-white"
+                              required
+                            />
+                          </div>
+                          
+                          <div className="space-y-2">
+                            <Label className="text-white">Muscle Group</Label>
+                            <select
+                              value={editingExercise.muscle_group_id}
+                              onChange={(e) => setEditingExercise(prev => prev ? { ...prev, muscle_group_id: e.target.value } : null)}
+                              className="w-full p-2 bg-black/20 border border-white/20 rounded-md text-white"
+                              required
+                            >
+                              {muscleGroups.map(mg => (
+                                <option key={mg.id} value={mg.id} className="capitalize bg-black">
+                                  {mg.name}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                          
+                          <div className="space-y-2">
+                            <Label className="text-white">Description (max 300 characters)</Label>
+                            <textarea
+                              value={editingExercise.description || ''}
+                              onChange={(e) => setEditingExercise(prev => prev ? { ...prev, description: e.target.value } : null)}
+                              className="w-full p-2 bg-black/20 border border-white/20 rounded-md text-white resize-none"
+                              maxLength={300}
+                              rows={3}
+                            />
+                          </div>
+                          
+                          <div className="space-y-2">
+                            <Label className="text-white">External Link Name</Label>
+                            <Input
+                              type="text"
+                              value={editingExercise.external_link_name || ''}
+                              onChange={(e) => setEditingExercise(prev => prev ? { ...prev, external_link_name: e.target.value } : null)}
+                              className="bg-black/20 border-white/20 text-white"
+                              maxLength={100}
+                            />
+                          </div>
+                          
+                          <div className="space-y-2">
+                            <Label className="text-white">External Link (max 150 characters)</Label>
+                            <Input
+                              type="url"
+                              value={editingExercise.external_link || ''}
+                              onChange={(e) => setEditingExercise(prev => prev ? { ...prev, external_link: e.target.value } : null)}
+                              className="bg-black/20 border-white/20 text-white"
+                              maxLength={150}
+                            />
+                          </div>
+                          
+                          <div className="flex flex-col sm:flex-row gap-2">
+                            <Button type="submit" disabled={isLoading} size="sm">
+                              {isLoading ? 'Saving...' : 'Save'}
+                            </Button>
+                            <Button 
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setEditingExercise(null)}
+                            >
+                              Cancel
+                            </Button>
+                          </div>
+                        </form>
+                      ) : (
+                        <div className="space-y-2">
+                          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                            <div className="flex items-center gap-2">
+                              <span className={`font-medium ${exercise.hidden ? 'text-gray-400' : 'text-white'}`}>
+                                {exercise.name}
+                              </span>
+                              {exercise.hidden && <Badge variant="secondary">Hidden</Badge>}
+                            </div>
+                            <div className="flex gap-2">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => setEditingExercise(exercise)}
+                              >
+                                Edit
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant={exercise.hidden ? "default" : "secondary"}
+                                onClick={() => handleToggleHidden(exercise.id, exercise.hidden)}
+                                disabled={isLoading}
+                              >
+                                {exercise.hidden ? 'Show' : 'Hide'}
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="destructive"
+                                onClick={() => setDeleteConfirm(exercise.id)}
+                              >
+                                Delete
+                              </Button>
+                            </div>
+                          </div>
+                          {exercise.description && (
+                            <p className="text-sm text-gray-300 mt-2">
+                              {exercise.description}
+                            </p>
+                          )}
+                          {exercise.external_link && exercise.external_link_name && (
+                            <a
+                              href={exercise.external_link}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-sm text-blue-400 hover:text-blue-300 underline inline-block mt-1"
+                            >
+                              {exercise.external_link_name}
+                            </a>
+                          )}
                         </div>
-                      </div>
-                      {exercise.description && (
-                        <p className="text-sm text-gray-300 mt-2">
-                          {exercise.description}
-                        </p>
                       )}
-                      {exercise.external_link && exercise.external_link_name && (
-                        <a
-                          href={exercise.external_link}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-sm text-blue-400 hover:text-blue-300 underline inline-block mt-1"
-                        >
-                          {exercise.external_link_name}
-                        </a>
-                      )}
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
         ))}
       </div>
 
       {/* Delete Confirmation Modal */}
       {deleteConfirm && (
         <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
-          <div className="bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4">
-            <h3 className="text-xl font-semibold text-white mb-4">Confirm Deletion</h3>
-            <p className="text-gray-300 mb-6">
-              Are you sure you want to delete this exercise? This will permanently delete all associated data, including statistics.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-3">
-              <button
-                onClick={() => handleDeleteExercise(deleteConfirm)}
-                disabled={isLoading}
-                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-500 disabled:opacity-50"
-              >
-                {isLoading ? 'Deleting...' : 'Delete'}
-              </button>
-              <button
-                onClick={() => setDeleteConfirm(null)}
-                className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-500"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
+          <Card className="max-w-md w-full mx-4 p-2">
+            <CardHeader>
+              <CardTitle className="text-white">Confirm Deletion</CardTitle>
+            </CardHeader>
+            <CardContent className="p-2">
+              <p className="text-gray-300 mb-6">
+                Are you sure you want to delete this exercise? This will permanently delete all associated data, including statistics.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-3">
+                <Button
+                  variant="destructive"
+                  onClick={() => handleDeleteExercise(deleteConfirm)}
+                  disabled={isLoading}
+                >
+                  {isLoading ? 'Deleting...' : 'Delete'}
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => setDeleteConfirm(null)}
+                >
+                  Cancel
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       )}
     </div>
