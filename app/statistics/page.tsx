@@ -6,11 +6,11 @@ export default async function Statistics() {
   const supabase = await createClient()
 
   const {
-    data: { session },
+    data: { user },
     error,
-  } = await supabase.auth.getSession()
+  } = await supabase.auth.getUser()
 
-  if (error || !session) {
+  if (error || !user) {
     redirect('/login')
   }
 
@@ -22,7 +22,7 @@ export default async function Statistics() {
         <p className="text-lg text-gray-300">View your workout statistics and progress</p>
       </div>
       
-      <StatisticsInterface userId={session.user.id} />
+      <StatisticsInterface userId={user.id} />
     </div>
   )
 }

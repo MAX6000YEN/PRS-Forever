@@ -10,11 +10,11 @@ export async function POST(request: NextRequest) {
     
     // Get the authenticated user
     const {
-      data: { session },
+      data: { user },
       error: authError,
-    } = await supabase.auth.getSession()
+    } = await supabase.auth.getUser()
 
-    if (authError || !session) {
+    if (authError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
       .from(workoutSessions)
       .where(
         and(
-          eq(workoutSessions.userId, session.user.id),
+          eq(workoutSessions.userId, user.id),
           eq(workoutSessions.date, currentDate)
         )
       )
@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
       // Create new session if it doesn't exist
       const newSession = await dbConnection.insert(workoutSessions)
         .values({
-          userId: session.user.id,
+          userId: user.id,
           date: currentDate
         })
         .returning({ id: workoutSessions.id })

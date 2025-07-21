@@ -11,15 +11,15 @@ export default async function Dashboard() {
   const supabase = await createClient()
 
   const {
-    data: { session },
+    data: { user },
     error,
-  } = await supabase.auth.getSession()
+  } = await supabase.auth.getUser()
 
-  if (error || !session) {
+  if (error || !user) {
     redirect('/login')
   }
 
-  const userEmail = session.user.email!
+  const userEmail = user.email!
 
   // Get current date info
   const today = new Date()
@@ -47,7 +47,7 @@ export default async function Dashboard() {
     .leftJoin(muscleGroups, eq(workoutSchedule.muscleGroupId, muscleGroups.id))
     .where(
       and(
-        eq(workoutSchedule.userId, session.user.id),
+        eq(workoutSchedule.userId, user.id),
         eq(workoutSchedule.dayOfWeek, dayOfWeek)
       )
     );
@@ -69,7 +69,7 @@ export default async function Dashboard() {
       .from(exercises)
       .where(
         and(
-          eq(exercises.userId, session.user.id),
+          eq(exercises.userId, user.id),
           inArray(exercises.muscleGroupId, muscleGroupIds),
           eq(exercises.hidden, false)
         )
@@ -92,7 +92,7 @@ export default async function Dashboard() {
     .leftJoin(workoutExercises, eq(workoutExercises.sessionId, workoutSessions.id))
     .where(
       and(
-        eq(workoutSessions.userId, session.user.id),
+        eq(workoutSessions.userId, user.id),
         eq(workoutSessions.date, lastWeekDate)
       )
     );
@@ -108,7 +108,7 @@ export default async function Dashboard() {
     .leftJoin(workoutExercises, eq(workoutExercises.sessionId, workoutSessions.id))
     .where(
       and(
-        eq(workoutSessions.userId, session.user.id),
+        eq(workoutSessions.userId, user.id),
         eq(workoutSessions.date, todayWeekDate)
       )
     );
@@ -163,7 +163,7 @@ export default async function Dashboard() {
       ) : workoutData.length > 0 ? (
         <WorkoutInterface 
           workoutData={workoutData}
-          userId={session.user.id}
+          userId={user.id}
           currentDate={today.toISOString().split('T')[0]}
         />
       ) : (

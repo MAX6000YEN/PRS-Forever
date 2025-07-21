@@ -21,10 +21,10 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const getUser = async () => {
-      const { data: { session } } = await supabase.auth.getSession()
-      if (session?.user) {
-        setUser(session.user)
-        setUsername(session.user.user_metadata?.username || session.user.email?.split('@')[0] || '')
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        setUser(user)
+        setUsername(user.user_metadata?.username || user.email?.split('@')[0] || '')
       }
       setLoading(false)
     }

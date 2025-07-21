@@ -68,10 +68,11 @@ export default function Login() {
     e.preventDefault()
     setIsLoading(true)
     setError('')
-
+  
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/reset-password`,
+        // Use a more robust way to get the origin
+        redirectTo: `${typeof window !== 'undefined' ? window.location.origin : 'https://your-domain.vercel.app'}/reset-password`,
       })
       if (error) throw error
       setResetMessage('Check your email for the password reset link!')
