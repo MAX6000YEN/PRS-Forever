@@ -3,6 +3,8 @@
 import { useState, useCallback } from 'react'
 import MuscleGroupSection from './MuscleGroupSection'
 import Toast from './Toast'
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
 
 interface Exercise {
   id: string
@@ -105,8 +107,8 @@ export default function WorkoutInterface({ workoutData, userId, currentDate }: W
       {/* Today's muscle groups */}
       {workoutData.length > 0 && (
         <div className="mb-6">
-          <p className="text-lg text-gray-300">
-            <span className="text-white font-medium">Today&apos;s focus: </span>
+          <p className="text-lg text-white/80">
+            <span className="text-white font-medium">Today's focus: </span>
             {muscleGroupsText}
           </p>
         </div>
@@ -127,28 +129,27 @@ export default function WorkoutInterface({ workoutData, userId, currentDate }: W
 
       {/* Total workout weight - Show as soon as there are muscle groups scheduled */}
       {workoutData.length > 0 && (
-        <div className="block-bg rounded-lg p-6 mt-6">
-          <div className="flex justify-between items-center">
-            <h2 className="text-2xl font-bold text-white">Total Workout</h2>
-            <span className="text-2xl font-bold text-white">{totalWorkoutWeight.toFixed(1)} kg</span>
-          </div>
-        </div>
+        <Card className="mt-6">
+          <CardHeader>
+            <div className="flex justify-between items-center">
+              <CardTitle>Total Workout</CardTitle>
+              <span className="text-2xl font-bold text-white">{totalWorkoutWeight.toFixed(1)} kg</span>
+            </div>
+          </CardHeader>
+        </Card>
       )}
 
       {/* Save button - Show as soon as there are muscle groups scheduled, but disable until all fields are filled */}
       {workoutData.length > 0 && (
         <div className="mt-6 text-center">
-          <button
+          <Button
             onClick={saveWorkout}
             disabled={isSaving || !allExercisesFilled}
-            className={`text-lg px-8 py-3 rounded-lg font-medium transition-colors ${
-              allExercisesFilled && !isSaving
-                ? 'bg-blue-600 hover:bg-blue-500 text-white'
-                : 'bg-gray-600 text-gray-400 cursor-not-allowed'
-            }`}
+            size="lg"
+            className="text-lg px-8 py-3"
           >
             {isSaving ? 'Saving...' : 'My workout is over!'}
-          </button>
+          </Button>
         </div>
       )}
     </div>

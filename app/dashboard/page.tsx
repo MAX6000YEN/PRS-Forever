@@ -4,6 +4,8 @@ import WorkoutInterface from '../components/WorkoutInterface'
 import { dbConnection } from '@/app/db-connection'
 import { muscleGroups, workoutSchedule, exercises, workoutSessions, workoutExercises } from '@/database/schema'
 import { and, eq, isNull } from 'drizzle-orm'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
 
 export default async function Dashboard() {
   const supabase = await createClient()
@@ -153,17 +155,19 @@ export default async function Dashboard() {
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-4xl font-bold text-white mb-2">{currentDay}</h1>
-        <p className="text-lg text-gray-300">{formattedDate}</p>
+        <p className="text-lg text-white/70">{formattedDate}</p>
       </div>
 
       {/* Workout Content */}
       {isNoWorkoutDay ? (
-        <div className="block-bg rounded-lg p-8 text-center">
-          <h2 className="text-2xl text-white mb-4">No training scheduled today!</h2>
-          <p className="text-lg text-gray-300">
-            It&apos;s the perfect time for optimal muscle recovery. Take care of yourself!
-          </p>
-        </div>
+        <Card className="text-center">
+          <CardHeader>
+            <CardTitle>No training scheduled today!</CardTitle>
+            <CardDescription>
+              It's the perfect time for optimal muscle recovery. Take care of yourself!
+            </CardDescription>
+          </CardHeader>
+        </Card>
       ) : workoutData.length > 0 ? (
         <WorkoutInterface 
           workoutData={workoutData}
@@ -171,18 +175,19 @@ export default async function Dashboard() {
           currentDate={today.toISOString().split('T')[0]}
         />
       ) : (
-        <div className="block-bg rounded-lg p-8 text-center">
-          <h2 className="text-xl text-white mb-4">No workout scheduled for today</h2>
-          <p className="text-gray-300 mb-6">
-            Set up your workout schedule in the Management page to get started.
-          </p>
-          <a 
-            href="/management" 
-            className="btn-primary inline-block"
-          >
-            Go to Management
-          </a>
-        </div>
+        <Card className="text-center">
+          <CardHeader>
+            <CardTitle>No workout scheduled for today</CardTitle>
+            <CardDescription>
+              Set up your workout schedule in the Management page to get started.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button asChild>
+              <a href="/management">Go to Management</a>
+            </Button>
+          </CardContent>
+        </Card>
       )}
     </div>
   )
