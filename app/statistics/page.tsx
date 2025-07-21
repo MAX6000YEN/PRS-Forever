@@ -22,7 +22,7 @@ export default async function Statistics() {
         <p className="text-lg text-gray-300">View your workout statistics and progress</p>
       </div>
       
-      <StatisticsInterface userId={user.id} />
+      <StatisticsInterface />
     </div>
   )
 }

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import { useUser } from './UserProvider'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -10,10 +11,6 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { CalendarIcon } from "lucide-react"
 import { format, subWeeks, subDays, startOfWeek, endOfWeek, getWeek, getYear } from "date-fns"
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
-
-interface StatisticsInterfaceProps {
-  userId: string
-}
 
 interface WeightData {
   date: string
@@ -26,27 +23,8 @@ interface MuscleGroup {
   name: string
 }
 
-// Type definitions for Supabase query results with !inner joins
-interface WorkoutExerciseWithSession {
-  total_weight: string | null
-  workout_sessions: {
-    date: string
-    user_id: string
-  }[]
-}
-
-interface WorkoutExerciseWithSessionAndExercise {
-  total_weight: string | null
-  workout_sessions: {
-    date: string
-    user_id: string
-  }[]
-  exercises: {
-    muscle_group_id: string
-  }[]
-}
-
-export default function StatisticsInterface({ userId }: StatisticsInterfaceProps) {
+export default function StatisticsInterface() {
+  const { user, loading: userLoading } = useUser()
   const [dateRange, setDateRange] = useState<{from: Date, to: Date}>({
     from: subWeeks(new Date(), 5),
     to: new Date()
@@ -61,45 +39,56 @@ export default function StatisticsInterface({ userId }: StatisticsInterfaceProps
   const supabase = createClient()
 
   const fetchMuscleGroups = useCallback(async () => {
-    const { data } = await supabase
+    console.log('Fetching muscle groups...')
+    const { data, error } = await supabase
       .from('muscle_groups')
       .select('*')
       .order('name')
     
+    console.log('Muscle groups result:', { data, error })
     if (data) {
       setMuscleGroups(data)
     }
   }, [supabase])
 
   const fetchWeeklyData = useCallback(async () => {
-    const { data } = await supabase
+    if (!user) return
+    
+    console.log('Fetching weekly data for user:', user.id)
+    console.log('Date range:', format(dateRange.from, 'yyyy-MM-dd'), 'to', format(dateRange.to, 'yyyy-MM-dd'))
+    
+    const { data, error } = await supabase
       .from('workout_exercises')
       .select(`
         total_weight,
-        workout_sessions!inner(date, user_id)
+        workout_sessions!inner (
+          date,
+          user_id
+        )
       `)
-      .eq('workout_sessions.user_id', userId)
+      .eq('workout_sessions.user_id', user.id)
       .gte('workout_sessions.date', format(dateRange.from, 'yyyy-MM-dd'))
       .lte('workout_sessions.date', format(dateRange.to, 'yyyy-MM-dd'))
 
-    if (data) {
-      const typedData = data as WorkoutExerciseWithSession[]
+    console.log('Weekly data result:', { data, error })
+
+    if (data && data.length > 0) {
       const weeklyTotals: {[key: string]: number} = {}
       
-      typedData.forEach(item => {
-        // Access the first element of the workout_sessions array
-        const session = item.workout_sessions[0]
-        if (session) {
-          const date = new Date(session.date)
+      data.forEach((item: any) => {
+        if (item.workout_sessions && item.total_weight) {
+          const date = new Date(item.workout_sessions.date)
           const weekStart = startOfWeek(date)
           const weekKey = format(weekStart, 'yyyy-MM-dd')
           
           if (!weeklyTotals[weekKey]) {
             weeklyTotals[weekKey] = 0
           }
-          weeklyTotals[weekKey] += parseFloat(item.total_weight || '0')
+          weeklyTotals[weekKey] += parseFloat(item.total_weight)
         }
       })
+
+      console.log('Weekly totals:', weeklyTotals)
 
       const chartData = Object.entries(weeklyTotals).map(([weekStart, total]) => {
         const date = new Date(weekStart)
@@ -112,39 +101,49 @@ export default function StatisticsInterface({ userId }: StatisticsInterfaceProps
         }
       }).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
 
+      console.log('Weekly chart data:', chartData)
       setWeeklyData(chartData)
+    } else {
+      setWeeklyData([])
     }
-  }, [supabase, userId, dateRange.from, dateRange.to])
+  }, [supabase, user, dateRange.from, dateRange.to])
 
   const fetchMuscleGroupData = useCallback(async () => {
+    if (!user) return
+    
     const data: {[key: string]: WeightData[]} = {}
     
     for (const muscleGroup of muscleGroups) {
-      const { data: exerciseData } = await supabase
+      console.log('Fetching data for muscle group:', muscleGroup.name)
+      const { data: exerciseData, error } = await supabase
         .from('workout_exercises')
         .select(`
           total_weight,
-          workout_sessions!inner(date, user_id),
-          exercises!inner(muscle_group_id)
+          workout_sessions!inner (
+            date,
+            user_id
+          ),
+          exercises!inner (
+            muscle_group_id
+          )
         `)
-        .eq('workout_sessions.user_id', userId)
+        .eq('workout_sessions.user_id', user.id)
         .eq('exercises.muscle_group_id', muscleGroup.id)
         .gte('workout_sessions.date', format(dateRange.from, 'yyyy-MM-dd'))
         .lte('workout_sessions.date', format(dateRange.to, 'yyyy-MM-dd'))
 
-      if (exerciseData) {
-        const typedExerciseData = exerciseData as WorkoutExerciseWithSessionAndExercise[]
+      console.log(`Muscle group ${muscleGroup.name} data:`, { exerciseData, error })
+
+      if (exerciseData && exerciseData.length > 0) {
         const dailyTotals: {[key: string]: number} = {}
         
-        typedExerciseData.forEach(item => {
-          // Access the first element of the workout_sessions array
-          const session = item.workout_sessions[0]
-          if (session) {
-            const date = session.date
+        exerciseData.forEach((item: any) => {
+          if (item.workout_sessions && item.total_weight) {
+            const date = item.workout_sessions.date
             if (!dailyTotals[date]) {
               dailyTotals[date] = 0
             }
-            dailyTotals[date] += parseFloat(item.total_weight || '0')
+            dailyTotals[date] += parseFloat(item.total_weight)
           }
         })
 
@@ -156,36 +155,43 @@ export default function StatisticsInterface({ userId }: StatisticsInterfaceProps
         .slice(-7) // Last 7 training days
 
         data[muscleGroup.name] = chartData
+      } else {
+        data[muscleGroup.name] = []
       }
     }
     
     setMuscleGroupData(data)
-  }, [supabase, userId, muscleGroups, dateRange.from, dateRange.to])
+  }, [supabase, user, muscleGroups, dateRange.from, dateRange.to])
 
   const fetchDailyData = useCallback(async () => {
-    const { data } = await supabase
+    if (!user) return
+    
+    console.log('Fetching daily data for user:', user.id)
+    const { data, error } = await supabase
       .from('workout_exercises')
       .select(`
         total_weight,
-        workout_sessions!inner(date, user_id)
+        workout_sessions!inner (
+          date,
+          user_id
+        )
       `)
-      .eq('workout_sessions.user_id', userId)
+      .eq('workout_sessions.user_id', user.id)
       .gte('workout_sessions.date', format(subDays(new Date(), 7), 'yyyy-MM-dd'))
       .lte('workout_sessions.date', format(new Date(), 'yyyy-MM-dd'))
 
-    if (data) {
-      const typedData = data as WorkoutExerciseWithSession[]
+    console.log('Daily data result:', { data, error })
+
+    if (data && data.length > 0) {
       const dailyTotals: {[key: string]: number} = {}
       
-      typedData.forEach(item => {
-        // Access the first element of the workout_sessions array
-        const session = item.workout_sessions[0]
-        if (session) {
-          const date = session.date
+      data.forEach((item: any) => {
+        if (item.workout_sessions && item.total_weight) {
+          const date = item.workout_sessions.date
           if (!dailyTotals[date]) {
             dailyTotals[date] = 0
           }
-          dailyTotals[date] += parseFloat(item.total_weight || '0')
+          dailyTotals[date] += parseFloat(item.total_weight)
         }
       })
 
@@ -195,11 +201,16 @@ export default function StatisticsInterface({ userId }: StatisticsInterfaceProps
         label: format(new Date(date), 'dd/MM/yyyy')
       })).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
 
+      console.log('Daily chart data:', chartData)
       setDailyData(chartData)
+    } else {
+      setDailyData([])
     }
-  }, [supabase, userId])
+  }, [supabase, user])
 
   const fetchWeekdayData = useCallback(async () => {
+    if (!user) return
+    
     const weekdays = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
     const data: {[key: string]: WeightData[]} = {}
 
@@ -208,27 +219,27 @@ export default function StatisticsInterface({ userId }: StatisticsInterfaceProps
         .from('workout_exercises')
         .select(`
           total_weight,
-          workout_sessions!inner(date, user_id)
+          workout_sessions!inner (
+            date,
+            user_id
+          )
         `)
-        .eq('workout_sessions.user_id', userId)
+        .eq('workout_sessions.user_id', user.id)
         .gte('workout_sessions.date', format(subWeeks(new Date(), 7), 'yyyy-MM-dd'))
         .lte('workout_sessions.date', format(new Date(), 'yyyy-MM-dd'))
 
-      if (weekdayExerciseData) {
-        const typedWeekdayData = weekdayExerciseData as WorkoutExerciseWithSession[]
+      if (weekdayExerciseData && weekdayExerciseData.length > 0) {
         const weekdayTotals: {[key: string]: number} = {}
         
-        typedWeekdayData.forEach(item => {
-          // Access the first element of the workout_sessions array
-          const session = item.workout_sessions[0]
-          if (session) {
-            const date = new Date(session.date)
+        weekdayExerciseData.forEach((item: any) => {
+          if (item.workout_sessions && item.total_weight) {
+            const date = new Date(item.workout_sessions.date)
             if (date.getDay() === dayOfWeek) {
-              const dateKey = session.date
+              const dateKey = item.workout_sessions.date
               if (!weekdayTotals[dateKey]) {
                 weekdayTotals[dateKey] = 0
               }
-              weekdayTotals[dateKey] += parseFloat(item.total_weight || '0')
+              weekdayTotals[dateKey] += parseFloat(item.total_weight)
             }
           }
         })
@@ -241,13 +252,18 @@ export default function StatisticsInterface({ userId }: StatisticsInterfaceProps
         .slice(-7) // Last 7 occurrences
 
         data[weekdays[dayOfWeek]] = chartData
+      } else {
+        data[weekdays[dayOfWeek]] = []
       }
     }
     
     setWeekdayData(data)
-  }, [supabase, userId])
+  }, [supabase, user])
 
   const fetchStatistics = useCallback(async () => {
+    if (!user) return
+    
+    console.log('Starting to fetch statistics...')
     setLoading(true)
     await Promise.all([
       fetchWeeklyData(),
@@ -256,17 +272,32 @@ export default function StatisticsInterface({ userId }: StatisticsInterfaceProps
       fetchWeekdayData()
     ])
     setLoading(false)
-  }, [fetchWeeklyData, fetchMuscleGroupData, fetchDailyData, fetchWeekdayData])
+    console.log('Finished fetching statistics')
+  }, [fetchWeeklyData, fetchMuscleGroupData, fetchDailyData, fetchWeekdayData, user])
 
   useEffect(() => {
     fetchMuscleGroups()
   }, [fetchMuscleGroups])
 
   useEffect(() => {
-    if (muscleGroups.length > 0) {
+    console.log('Effect triggered:', { muscleGroupsLength: muscleGroups.length, user: !!user, userLoading })
+    if (muscleGroups.length > 0 && user && !userLoading) {
       fetchStatistics()
     }
-  }, [dateRange, muscleGroups, fetchStatistics])
+  }, [dateRange, muscleGroups, fetchStatistics, user, userLoading])
+
+  // Show loading state while user is being fetched
+  if (userLoading || !user) {
+    return (
+      <div className="p-6 space-y-6">
+        <div className="max-w-7xl mx-auto space-y-6">
+          <div className="glass-card p-2">
+            <div className="text-white text-center py-8">Loading...</div>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   const formatWeight = (value: number) => `${value.toFixed(1)}t`
 
@@ -282,6 +313,7 @@ export default function StatisticsInterface({ userId }: StatisticsInterfaceProps
   }
 
   const renderChart = (data: WeightData[], hasData: boolean = true) => {
+    console.log('Rendering chart with data:', data)
     if (!hasData || !data.length) {
       return (
         <div className="glass-card p-2">
@@ -325,6 +357,8 @@ export default function StatisticsInterface({ userId }: StatisticsInterfaceProps
   return (
     <div className="p-6 space-y-6">
       <div className="max-w-7xl mx-auto space-y-6">
+        {/* Debug info */}
+
         {/* Date Range Selector */}
         <div className="glass-card p-2">
           <h2 className="text-xl font-semibold text-white mb-4">Select Date Range</h2>
