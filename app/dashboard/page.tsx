@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation'
 import WorkoutInterface from '../components/WorkoutInterface'
 import { dbConnection } from '@/app/db-connection'
 import { muscleGroups, workoutSchedule, exercises, workoutSessions, workoutExercises } from '@/database/schema'
-import { and, eq, isNull } from 'drizzle-orm'
+import { and, eq, inArray } from 'drizzle-orm'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 
@@ -33,18 +33,18 @@ export default async function Dashboard() {
     day: 'numeric'
   })
 
-  // Get user's workout schedule for today using Drizzle
-  const getTodaysWorkout = await dbConnection.select({
-    id: workoutSchedule.id,
-    muscleGroupId: workoutSchedule.muscleGroupId,
-    muscleGroupName: muscleGroups.name,
-    muscleGroupIdFromTable: muscleGroups.id
-  })
+  // Use basic select with join instead of relational query
+  const getTodaysWorkout = await dbConnection
+    .select({
+      id: workoutSchedule.id,
+      userId: workoutSchedule.userId,
+      muscleGroupId: workoutSchedule.muscleGroupId,
+      dayOfWeek: workoutSchedule.dayOfWeek,
+      createdAt: workoutSchedule.createdAt,
+      muscleGroupName: muscleGroups.name,
+    })
     .from(workoutSchedule)
-    .leftJoin(
-      muscleGroups,
-      eq(muscleGroups.id, workoutSchedule.muscleGroupId)
-    )
+    .leftJoin(muscleGroups, eq(workoutSchedule.muscleGroupId, muscleGroups.id))
     .where(
       and(
         eq(workoutSchedule.userId, session.user.id),
@@ -53,35 +53,27 @@ export default async function Dashboard() {
     );
 
   // Check if this is explicitly a "no workout" day (has entry but no muscle groups)
-  const noWorkoutEntry = await dbConnection.select({
-    id: workoutSchedule.id
-  })
-    .from(workoutSchedule)
-    .where(
-      and(
-        eq(workoutSchedule.userId, session.user.id),
-        eq(workoutSchedule.dayOfWeek, dayOfWeek),
-        isNull(workoutSchedule.muscleGroupId)
-      )
-    );
-
+  const noWorkoutEntry = getTodaysWorkout.filter(entry => entry.muscleGroupId === null);
   const isNoWorkoutDay = noWorkoutEntry.length > 0;
 
-  // Get exercises for today's muscle groups using Drizzle (excluding hidden exercises)
+  // Get muscle group IDs for today's workout
   const muscleGroupIds = getTodaysWorkout
     .filter(entry => entry.muscleGroupId !== null)
     .map(entry => entry.muscleGroupId!);
-  
+
+  // Get exercises for today's muscle groups using basic select
   let todaysExercises: typeof exercises.$inferSelect[] = [];
   if (muscleGroupIds.length > 0) {
-    todaysExercises = await dbConnection.query.exercises
-      .findMany({
-        where: (exercises, { eq, inArray }) => and(
+    todaysExercises = await dbConnection
+      .select()
+      .from(exercises)
+      .where(
+        and(
           eq(exercises.userId, session.user.id),
           inArray(exercises.muscleGroupId, muscleGroupIds),
-          eq(exercises.hidden, false) // Only show non-hidden exercises
+          eq(exercises.hidden, false)
         )
-      });
+      );
   }
 
   // Get previous week's data for auto-population using Drizzle
