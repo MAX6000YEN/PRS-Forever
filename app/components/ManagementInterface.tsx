@@ -48,10 +48,10 @@ export default function ManagementInterface({
   userId 
 }: ManagementInterfaceProps) {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-900 via-purple-800 to-indigo-900 p-6">
+    <div className="p-6">
       <div className="max-w-7xl mx-auto">
         <Tabs defaultValue="muscle-groups" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-2 glass">
             <TabsTrigger value="muscle-groups">Muscle Groups</TabsTrigger>
             <TabsTrigger value="exercises">Exercises</TabsTrigger>
           </TabsList>

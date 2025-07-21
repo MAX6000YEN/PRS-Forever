@@ -244,11 +244,9 @@ export default function StatisticsInterface({ userId }: StatisticsInterfaceProps
   const renderChart = (data: WeightData[], hasData: boolean = true) => {
     if (!hasData || !data.length) {
       return (
-        <Card className="p-2">
-          <CardContent className="p-2">
-            <div className="text-white text-center py-8">No data available</div>
-          </CardContent>
-        </Card>
+        <div className="glass-card p-2">
+          <div className="text-white text-center py-8">No data available</div>
+        </div>
       )
     }
 
@@ -257,83 +255,79 @@ export default function StatisticsInterface({ userId }: StatisticsInterfaceProps
     const tickInterval = Math.max(0.1, Math.ceil(yAxisMax / 5 * 10) / 10)
 
     return (
-      <Card className="p-2">
-        <CardContent className="p-2">
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={data} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#ffffff20" />
-              <XAxis 
-                dataKey="label" 
-                stroke="#ffffff80"
-                fontSize={12}
-                interval={0}
-                angle={-45}
-                textAnchor="end"
-                height={80}
-              />
-              <YAxis 
-                stroke="#ffffff80"
-                fontSize={12}
-                tickFormatter={formatWeight}
-                domain={[0, yAxisMax]}
-              />
-              <Tooltip content={<CustomTooltip />} />
-              <Bar dataKey="weight" fill="#8b5cf6" radius={[4, 4, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
-        </CardContent>
-      </Card>
+      <div className="glass-card p-2">
+        <ResponsiveContainer width="100%" height={300}>
+          <BarChart data={data} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
+            <CartesianGrid strokeDasharray="3 3" stroke="#ffffff20" />
+            <XAxis 
+              dataKey="label" 
+              stroke="#ffffff80"
+              fontSize={12}
+              interval={0}
+              angle={-45}
+              textAnchor="end"
+              height={80}
+            />
+            <YAxis 
+              stroke="#ffffff80"
+              fontSize={12}
+              tickFormatter={formatWeight}
+              domain={[0, yAxisMax]}
+            />
+            <Tooltip content={<CustomTooltip />} />
+            <Bar dataKey="weight" fill="#8b5cf6" radius={[4, 4, 0, 0]} />
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-900 via-purple-800 to-indigo-900 p-6">
+    <div className="p-6 space-y-6">
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Date Range Selector */}
-        <Card className="p-2">
-          <CardContent className="p-2">
-            <h2 className="text-xl font-semibold text-white mb-4">Select Date Range</h2>
-            <div className="flex gap-4 items-center flex-wrap">
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button variant="outline" className="w-full sm:w-[280px] justify-start text-left font-normal">
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {dateRange?.from ? (
-                      dateRange.to ? (
-                        <>
-                          {format(dateRange.from, "LLL dd, y")} -{" "}
-                          {format(dateRange.to, "LLL dd, y")}
-                        </>
-                      ) : (
-                        format(dateRange.from, "LLL dd, y")
-                      )
+        <div className="glass-card p-2">
+          <h2 className="text-xl font-semibold text-white mb-4">Select Date Range</h2>
+          <div className="flex gap-4 items-center flex-wrap">
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" className="w-full sm:w-[280px] justify-start text-left font-normal glass-button">
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {dateRange?.from ? (
+                    dateRange.to ? (
+                      <>
+                        {format(dateRange.from, "LLL dd, y")} -{" "}
+                        {format(dateRange.to, "LLL dd, y")}
+                      </>
                     ) : (
-                      <span>Pick a date range</span>
-                    )}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    initialFocus
-                    mode="range"
-                    defaultMonth={dateRange?.from}
-                    selected={dateRange}
-                    onSelect={(range) => {
-                      if (range?.from && range?.to) {
-                        setDateRange({ from: range.from, to: range.to })
-                      }
-                    }}
-                    numberOfMonths={2}
-                    className="rounded-md border"
-                  />
-                </PopoverContent>
-              </Popover>
-            </div>
-          </CardContent>
-        </Card>
+                      format(dateRange.from, "LLL dd, y")
+                    )
+                  ) : (
+                    <span>Pick a date range</span>
+                  )}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0 glass-card" align="start">
+                <Calendar
+                  initialFocus
+                  mode="range"
+                  defaultMonth={dateRange?.from}
+                  selected={dateRange}
+                  onSelect={(range) => {
+                    if (range?.from && range?.to) {
+                      setDateRange({ from: range.from, to: range.to })
+                    }
+                  }}
+                  numberOfMonths={2}
+                  className="rounded-md border-0"
+                />
+              </PopoverContent>
+            </Popover>
+          </div>
+        </div>
 
         <Tabs defaultValue="weekly" className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-3 glass">
             <TabsTrigger value="weekly">Weekly Weight</TabsTrigger>
             <TabsTrigger value="muscle-groups">Muscle Groups</TabsTrigger>
             <TabsTrigger value="daily">Daily Weight</TabsTrigger>
