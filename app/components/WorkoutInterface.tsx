@@ -106,7 +106,7 @@ export default function WorkoutInterface({ workoutData, userId, currentDate }: W
       {workoutData.length > 0 && (
         <div className="mb-6">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="text-lg text-white font-medium">Today's focus:</span>
+            <span className="text-lg text-white font-medium">Today&apos;s focus:</span>
             {workoutData.map((data, index) => (
               <Badge 
                 key={data.muscleGroup} 

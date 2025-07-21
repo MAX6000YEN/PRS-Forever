@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent } from "@/components/ui/card"
@@ -26,6 +26,26 @@ interface MuscleGroup {
   name: string
 }
 
+// Type definitions for Supabase query results with !inner joins
+interface WorkoutExerciseWithSession {
+  total_weight: string | null
+  workout_sessions: {
+    date: string
+    user_id: string
+  }[]
+}
+
+interface WorkoutExerciseWithSessionAndExercise {
+  total_weight: string | null
+  workout_sessions: {
+    date: string
+    user_id: string
+  }[]
+  exercises: {
+    muscle_group_id: string
+  }[]
+}
+
 export default function StatisticsInterface({ userId }: StatisticsInterfaceProps) {
   const [dateRange, setDateRange] = useState<{from: Date, to: Date}>({
     from: subWeeks(new Date(), 5),
@@ -40,17 +60,7 @@ export default function StatisticsInterface({ userId }: StatisticsInterfaceProps
 
   const supabase = createClient()
 
-  useEffect(() => {
-    fetchMuscleGroups()
-  }, [])
-
-  useEffect(() => {
-    if (muscleGroups.length > 0) {
-      fetchStatistics()
-    }
-  }, [dateRange, muscleGroups])
-
-  const fetchMuscleGroups = async () => {
+  const fetchMuscleGroups = useCallback(async () => {
     const { data } = await supabase
       .from('muscle_groups')
       .select('*')
@@ -59,20 +69,9 @@ export default function StatisticsInterface({ userId }: StatisticsInterfaceProps
     if (data) {
       setMuscleGroups(data)
     }
-  }
+  }, [supabase])
 
-  const fetchStatistics = async () => {
-    setLoading(true)
-    await Promise.all([
-      fetchWeeklyData(),
-      fetchMuscleGroupData(),
-      fetchDailyData(),
-      fetchWeekdayData()
-    ])
-    setLoading(false)
-  }
-
-  const fetchWeeklyData = async () => {
+  const fetchWeeklyData = useCallback(async () => {
     const { data } = await supabase
       .from('workout_exercises')
       .select(`
@@ -84,17 +83,22 @@ export default function StatisticsInterface({ userId }: StatisticsInterfaceProps
       .lte('workout_sessions.date', format(dateRange.to, 'yyyy-MM-dd'))
 
     if (data) {
+      const typedData = data as WorkoutExerciseWithSession[]
       const weeklyTotals: {[key: string]: number} = {}
       
-      data.forEach(item => {
-        const date = new Date(item.workout_sessions.date)
-        const weekStart = startOfWeek(date)
-        const weekKey = format(weekStart, 'yyyy-MM-dd')
-        
-        if (!weeklyTotals[weekKey]) {
-          weeklyTotals[weekKey] = 0
+      typedData.forEach(item => {
+        // Access the first element of the workout_sessions array
+        const session = item.workout_sessions[0]
+        if (session) {
+          const date = new Date(session.date)
+          const weekStart = startOfWeek(date)
+          const weekKey = format(weekStart, 'yyyy-MM-dd')
+          
+          if (!weeklyTotals[weekKey]) {
+            weeklyTotals[weekKey] = 0
+          }
+          weeklyTotals[weekKey] += parseFloat(item.total_weight || '0')
         }
-        weeklyTotals[weekKey] += parseFloat(item.total_weight || '0')
       })
 
       const chartData = Object.entries(weeklyTotals).map(([weekStart, total]) => {
@@ -110,9 +114,9 @@ export default function StatisticsInterface({ userId }: StatisticsInterfaceProps
 
       setWeeklyData(chartData)
     }
-  }
+  }, [supabase, userId, dateRange.from, dateRange.to])
 
-  const fetchMuscleGroupData = async () => {
+  const fetchMuscleGroupData = useCallback(async () => {
     const data: {[key: string]: WeightData[]} = {}
     
     for (const muscleGroup of muscleGroups) {
@@ -129,14 +133,19 @@ export default function StatisticsInterface({ userId }: StatisticsInterfaceProps
         .lte('workout_sessions.date', format(dateRange.to, 'yyyy-MM-dd'))
 
       if (exerciseData) {
+        const typedExerciseData = exerciseData as WorkoutExerciseWithSessionAndExercise[]
         const dailyTotals: {[key: string]: number} = {}
         
-        exerciseData.forEach(item => {
-          const date = item.workout_sessions.date
-          if (!dailyTotals[date]) {
-            dailyTotals[date] = 0
+        typedExerciseData.forEach(item => {
+          // Access the first element of the workout_sessions array
+          const session = item.workout_sessions[0]
+          if (session) {
+            const date = session.date
+            if (!dailyTotals[date]) {
+              dailyTotals[date] = 0
+            }
+            dailyTotals[date] += parseFloat(item.total_weight || '0')
           }
-          dailyTotals[date] += parseFloat(item.total_weight || '0')
         })
 
         const chartData = Object.entries(dailyTotals).map(([date, total]) => ({
@@ -151,9 +160,9 @@ export default function StatisticsInterface({ userId }: StatisticsInterfaceProps
     }
     
     setMuscleGroupData(data)
-  }
+  }, [supabase, userId, muscleGroups, dateRange.from, dateRange.to])
 
-  const fetchDailyData = async () => {
+  const fetchDailyData = useCallback(async () => {
     const { data } = await supabase
       .from('workout_exercises')
       .select(`
@@ -165,14 +174,19 @@ export default function StatisticsInterface({ userId }: StatisticsInterfaceProps
       .lte('workout_sessions.date', format(new Date(), 'yyyy-MM-dd'))
 
     if (data) {
+      const typedData = data as WorkoutExerciseWithSession[]
       const dailyTotals: {[key: string]: number} = {}
       
-      data.forEach(item => {
-        const date = item.workout_sessions.date
-        if (!dailyTotals[date]) {
-          dailyTotals[date] = 0
+      typedData.forEach(item => {
+        // Access the first element of the workout_sessions array
+        const session = item.workout_sessions[0]
+        if (session) {
+          const date = session.date
+          if (!dailyTotals[date]) {
+            dailyTotals[date] = 0
+          }
+          dailyTotals[date] += parseFloat(item.total_weight || '0')
         }
-        dailyTotals[date] += parseFloat(item.total_weight || '0')
       })
 
       const chartData = Object.entries(dailyTotals).map(([date, total]) => ({
@@ -183,9 +197,9 @@ export default function StatisticsInterface({ userId }: StatisticsInterfaceProps
 
       setDailyData(chartData)
     }
-  }
+  }, [supabase, userId])
 
-  const fetchWeekdayData = async () => {
+  const fetchWeekdayData = useCallback(async () => {
     const weekdays = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
     const data: {[key: string]: WeightData[]} = {}
 
@@ -201,16 +215,21 @@ export default function StatisticsInterface({ userId }: StatisticsInterfaceProps
         .lte('workout_sessions.date', format(new Date(), 'yyyy-MM-dd'))
 
       if (weekdayExerciseData) {
+        const typedWeekdayData = weekdayExerciseData as WorkoutExerciseWithSession[]
         const weekdayTotals: {[key: string]: number} = {}
         
-        weekdayExerciseData.forEach(item => {
-          const date = new Date(item.workout_sessions.date)
-          if (date.getDay() === dayOfWeek) {
-            const dateKey = item.workout_sessions.date
-            if (!weekdayTotals[dateKey]) {
-              weekdayTotals[dateKey] = 0
+        typedWeekdayData.forEach(item => {
+          // Access the first element of the workout_sessions array
+          const session = item.workout_sessions[0]
+          if (session) {
+            const date = new Date(session.date)
+            if (date.getDay() === dayOfWeek) {
+              const dateKey = session.date
+              if (!weekdayTotals[dateKey]) {
+                weekdayTotals[dateKey] = 0
+              }
+              weekdayTotals[dateKey] += parseFloat(item.total_weight || '0')
             }
-            weekdayTotals[dateKey] += parseFloat(item.total_weight || '0')
           }
         })
 
@@ -226,7 +245,28 @@ export default function StatisticsInterface({ userId }: StatisticsInterfaceProps
     }
     
     setWeekdayData(data)
-  }
+  }, [supabase, userId])
+
+  const fetchStatistics = useCallback(async () => {
+    setLoading(true)
+    await Promise.all([
+      fetchWeeklyData(),
+      fetchMuscleGroupData(),
+      fetchDailyData(),
+      fetchWeekdayData()
+    ])
+    setLoading(false)
+  }, [fetchWeeklyData, fetchMuscleGroupData, fetchDailyData, fetchWeekdayData])
+
+  useEffect(() => {
+    fetchMuscleGroups()
+  }, [fetchMuscleGroups])
+
+  useEffect(() => {
+    if (muscleGroups.length > 0) {
+      fetchStatistics()
+    }
+  }, [dateRange, muscleGroups, fetchStatistics])
 
   const formatWeight = (value: number) => `${value.toFixed(1)}t`
 

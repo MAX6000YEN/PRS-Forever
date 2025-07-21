@@ -129,9 +129,9 @@ export default async function Dashboard() {
           return {
             id: exercise.id,
             name: exercise.name,
-            description: exercise.description,
-            external_link: exercise.externalLink,
-            external_link_name: exercise.externalLinkName,
+            description: exercise.description || undefined,
+            external_link: exercise.externalLink || undefined,
+            external_link_name: exercise.externalLinkName || undefined,
             previousData: !!previousExerciseData ? {
               weight: Number(previousExerciseData?.weight || 0),
               reps: previousExerciseData?.reps || 0,
@@ -156,7 +156,7 @@ export default async function Dashboard() {
           <CardHeader>
             <CardTitle>No training scheduled today!</CardTitle>
             <CardDescription>
-              It's the perfect time for optimal muscle recovery. Take care of yourself!
+              It&apos;s the perfect time for optimal muscle recovery. Take care of yourself!
             </CardDescription>
           </CardHeader>
         </Card>
