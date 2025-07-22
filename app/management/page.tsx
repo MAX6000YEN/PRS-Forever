@@ -32,6 +32,7 @@ export default async function Management() {
       description: exercises.description,
       external_link: exercises.externalLink,
       external_link_name: exercises.externalLinkName,
+      rest_time: exercises.restTime,
       muscle_groups: {
         id: muscleGroups.id,
         name: muscleGroups.name
@@ -52,6 +53,7 @@ export default async function Management() {
       description: exercise.description || undefined,
       external_link: exercise.external_link || undefined,
       external_link_name: exercise.external_link_name || undefined,
+      rest_time: exercise.rest_time,
       muscle_groups: {
         id: exercise.muscle_groups!.id,
         name: exercise.muscle_groups!.name

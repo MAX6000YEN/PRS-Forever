@@ -12,6 +12,7 @@
     "db:migrate": "drizzle-kit migrate"
   },
   "dependencies": {
+    "@radix-ui/react-dialog": "^1.1.14",
     "@radix-ui/react-label": "^2.0.2",
     "@radix-ui/react-popover": "^1.1.14",
     "@radix-ui/react-separator": "^1.1.7",

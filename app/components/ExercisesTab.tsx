@@ -20,6 +20,7 @@ interface Exercise {
   description?: string
   external_link?: string
   external_link_name?: string
+  rest_time: number
   muscle_groups: {
     id: string
     name: string
@@ -45,7 +46,8 @@ export default function ExercisesTab({
     selectedMuscleGroups: [] as string[],
     description: '',
     external_link: '',
-    external_link_name: ''
+    external_link_name: '',
+    rest_time: 60
   })
   const [editingExercise, setEditingExercise] = useState<Exercise | null>(null)
   const [editingSelectedMuscleGroups, setEditingSelectedMuscleGroups] = useState<string[]>([])
@@ -116,6 +118,9 @@ export default function ExercisesTab({
     e.preventDefault()
     if (!newExercise.name.trim() || newExercise.selectedMuscleGroups.length === 0) return
 
+    // Ensure rest time is valid
+    const restTime = newExercise.rest_time === 0 ? 60 : newExercise.rest_time
+
     setIsLoading(true)
     try {
       // Check for duplicates
@@ -139,7 +144,8 @@ export default function ExercisesTab({
             hidden: false,
             description: newExercise.description.trim() || null,
             external_link: newExercise.external_link.trim() || null,
-            external_link_name: newExercise.external_link_name.trim() || null
+            external_link_name: newExercise.external_link_name.trim() || null,
+            rest_time: restTime
           })
           .select(`
             *,
@@ -161,7 +167,8 @@ export default function ExercisesTab({
         selectedMuscleGroups: [], 
         description: '', 
         external_link: '', 
-        external_link_name: '' 
+        external_link_name: '',
+        rest_time: 60
       })
       setShowAddForm(false)
     } catch (error) {
@@ -175,6 +182,9 @@ export default function ExercisesTab({
   const handleUpdateExercise = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!editingExercise || editingSelectedMuscleGroups.length === 0) return
+
+    // Ensure rest time is valid
+    const restTime = editingExercise.rest_time === 0 ? 60 : editingExercise.rest_time
 
     setIsLoading(true)
     try {
@@ -216,7 +226,8 @@ export default function ExercisesTab({
             hidden: editingExercise.hidden,
             description: editingExercise.description?.trim() || null,
             external_link: editingExercise.external_link?.trim() || null,
-            external_link_name: editingExercise.external_link_name?.trim() || null
+            external_link_name: editingExercise.external_link_name?.trim() || null,
+            rest_time: restTime
           })
           .select(`
             *,
@@ -378,6 +389,42 @@ export default function ExercisesTab({
               </div>
             </div>
 
+            <div className="space-y-2">
+              <Label htmlFor="rest-time" className="text-white">Rest Time (seconds)</Label>
+              <Input
+                id="rest-time"
+                type="number"
+                inputMode="numeric"
+                value={newExercise.rest_time === 0 ? '' : newExercise.rest_time.toString()}
+                onChange={(e) => {
+                  const value = e.target.value
+                  if (value === '') {
+                    setNewExercise(prev => ({ ...prev, rest_time: 0 }))
+                  } else {
+                    const numValue = parseInt(value)
+                    if (!isNaN(numValue)) {
+                      setNewExercise(prev => ({ ...prev, rest_time: numValue }))
+                    }
+                  }
+                }}
+                onBlur={(e) => {
+                  const value = parseInt(e.target.value)
+                  if (isNaN(value) || value < 10) {
+                    setNewExercise(prev => ({ ...prev, rest_time: 60 }))
+                  } else if (value > 600) {
+                    setNewExercise(prev => ({ ...prev, rest_time: 600 }))
+                  }
+                }}
+                placeholder="60"
+                min={10}
+                max={600}
+                className="glass-input text-white placeholder:text-white/50"
+              />
+              <div className="text-xs text-gray-400">
+                Recommended rest time between sets (10-600 seconds)
+              </div>
+            </div>
+
             {/* Muscle Group Selection Buttons */}
             <div className="space-y-2">
               <Label className="text-white">Select Muscle Groups</Label>
@@ -414,7 +461,8 @@ export default function ExercisesTab({
                     selectedMuscleGroups: [], 
                     description: '', 
                     external_link: '', 
-                    external_link_name: '' 
+                    external_link_name: '',
+                    rest_time: 60
                   })
                 }}
               >
@@ -491,6 +539,40 @@ export default function ExercisesTab({
                           className="glass-input text-white"
                           maxLength={150}
                         />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label className="text-white">Rest Time (seconds)</Label>
+                        <Input
+                          type="number"
+                          inputMode="numeric"
+                          value={editingExercise.rest_time === 0 ? '' : editingExercise.rest_time.toString()}
+                          onChange={(e) => {
+                            const value = e.target.value
+                            if (value === '') {
+                              setEditingExercise(prev => prev ? { ...prev, rest_time: 0 } : null)
+                            } else {
+                              const numValue = parseInt(value)
+                              if (!isNaN(numValue)) {
+                                setEditingExercise(prev => prev ? { ...prev, rest_time: numValue } : null)
+                              }
+                            }
+                          }}
+                          onBlur={(e) => {
+                            const value = parseInt(e.target.value)
+                            if (isNaN(value) || value < 10) {
+                              setEditingExercise(prev => prev ? { ...prev, rest_time: 60 } : null)
+                            } else if (value > 600) {
+                              setEditingExercise(prev => prev ? { ...prev, rest_time: 600 } : null)
+                            }
+                          }}
+                          className="glass-input text-white"
+                          min={10}
+                          max={600}
+                        />
+                        <div className="text-xs text-gray-400">
+                          Recommended rest time between sets (10-600 seconds)
+                        </div>
                       </div>
 
                       <div className="space-y-2">

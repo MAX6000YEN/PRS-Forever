@@ -11,6 +11,7 @@ interface Exercise {
   description?: string
   external_link?: string
   external_link_name?: string
+  rest_time?: number
   previousData?: {
     weight: number
     reps: number
@@ -96,6 +97,7 @@ export default function MuscleGroupSection({
             description={exercise.description}
             externalLink={exercise.external_link}
             externalLinkName={exercise.external_link_name}
+            restTime={exercise.rest_time}
             previousData={exercise.previousData}
             onDataChange={handleExerciseDataChange}
           />

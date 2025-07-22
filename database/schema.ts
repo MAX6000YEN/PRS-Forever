@@ -30,6 +30,7 @@ export const exercises = pgTable("exercises", {
 	description: varchar({ length: 300 }),
 	externalLink: varchar("external_link", { length: 150 }),
 	externalLinkName: varchar("external_link_name", { length: 100 }),
+	restTime: integer("rest_time").default(60).notNull(), // Rest time in seconds, default 60 seconds
 }, (table) => [
 	foreignKey({
 		columns: [table.muscleGroupId],

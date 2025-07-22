@@ -12,6 +12,7 @@ interface Exercise {
   description?: string
   external_link?: string
   external_link_name?: string
+  rest_time: number
   previousData?: {
     weight: number
     reps: number
@@ -91,8 +92,12 @@ export default function WorkoutInterface({ workoutData, userId, currentDate }: W
   const totalExercises = workoutData.reduce((total, data) => total + data.exercises.length, 0)
   
   // Check if all exercises have been filled in
-  const allExercisesFilled = Object.keys(exerciseData).length === totalExercises && 
-    Object.values(exerciseData).every(data => data.weight > 0 && data.reps > 0 && data.sets > 0)
+  const allExercisesFilled = workoutData.every(data => 
+    data.exercises.every(exercise => {
+      const exerciseEntry = exerciseData[exercise.id]
+      return exerciseEntry && exerciseEntry.weight > 0 && exerciseEntry.reps > 0 && exerciseEntry.sets > 0
+    })
+  )
 
   // Check if workout data has changed since last save
   const hasDataChanged = JSON.stringify(exerciseData) !== JSON.stringify(initialExerciseData)

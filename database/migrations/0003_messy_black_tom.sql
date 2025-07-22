@@ -1,0 +1,1 @@
+ALTER TABLE "exercises" ADD COLUMN "rest_time" integer DEFAULT 60 NOT NULL;

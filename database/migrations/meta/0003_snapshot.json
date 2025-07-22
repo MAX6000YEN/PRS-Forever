@@ -1,0 +1,598 @@
+{
+  "id": "9802871e-3191-4d8d-b532-9d5b2fc1eef6",
+  "prevId": "7115f095-a94c-4c76-98c3-8f23df46e245",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "public.exercises": {
+      "name": "exercises",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "name": {
+          "name": "name",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "muscle_group_id": {
+          "name": "muscle_group_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "now()"
+        },
+        "hidden": {
+          "name": "hidden",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "description": {
+          "name": "description",
+          "type": "varchar(300)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "external_link": {
+          "name": "external_link",
+          "type": "varchar(150)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "external_link_name": {
+          "name": "external_link_name",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "rest_time": {
+          "name": "rest_time",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 60
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "exercises_muscle_group_id_fkey": {
+          "name": "exercises_muscle_group_id_fkey",
+          "tableFrom": "exercises",
+          "tableTo": "muscle_groups",
+          "columnsFrom": [
+            "muscle_group_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "exercises_user_id_fkey": {
+          "name": "exercises_user_id_fkey",
+          "tableFrom": "exercises",
+          "tableTo": "users",
+          "schemaTo": "auth",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "exercises_name_user_id_muscle_group_id_key": {
+          "name": "exercises_name_user_id_muscle_group_id_key",
+          "nullsNotDistinct": false,
+          "columns": [
+            "name",
+            "user_id",
+            "muscle_group_id"
+          ]
+        }
+      },
+      "policies": {
+        "Users can delete their own exercises": {
+          "name": "Users can delete their own exercises",
+          "as": "PERMISSIVE",
+          "for": "DELETE",
+          "to": [
+            "public"
+          ],
+          "using": "(auth.uid() = user_id)"
+        },
+        "Users can update their own exercises": {
+          "name": "Users can update their own exercises",
+          "as": "PERMISSIVE",
+          "for": "UPDATE",
+          "to": [
+            "public"
+          ]
+        },
+        "Users can insert their own exercises": {
+          "name": "Users can insert their own exercises",
+          "as": "PERMISSIVE",
+          "for": "INSERT",
+          "to": [
+            "public"
+          ]
+        },
+        "Users can view their own exercises": {
+          "name": "Users can view their own exercises",
+          "as": "PERMISSIVE",
+          "for": "SELECT",
+          "to": [
+            "public"
+          ]
+        }
+      },
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.muscle_groups": {
+      "name": "muscle_groups",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "name": {
+          "name": "name",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "muscle_groups_name_key": {
+          "name": "muscle_groups_name_key",
+          "nullsNotDistinct": false,
+          "columns": [
+            "name"
+          ]
+        }
+      },
+      "policies": {
+        "Muscle groups are viewable by everyone": {
+          "name": "Muscle groups are viewable by everyone",
+          "as": "PERMISSIVE",
+          "for": "SELECT",
+          "to": [
+            "public"
+          ],
+          "using": "true"
+        }
+      },
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "auth.users": {
+      "name": "users",
+      "schema": "auth",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.workout_exercises": {
+      "name": "workout_exercises",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "session_id": {
+          "name": "session_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "exercise_id": {
+          "name": "exercise_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "weight": {
+          "name": "weight",
+          "type": "numeric(5, 2)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "reps": {
+          "name": "reps",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "sets": {
+          "name": "sets",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "total_weight": {
+          "name": "total_weight",
+          "type": "numeric(8, 2)",
+          "primaryKey": false,
+          "notNull": false,
+          "generated": {
+            "as": "((weight * (reps)::numeric) * (sets)::numeric)",
+            "type": "stored"
+          }
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "workout_exercises_exercise_id_fkey": {
+          "name": "workout_exercises_exercise_id_fkey",
+          "tableFrom": "workout_exercises",
+          "tableTo": "exercises",
+          "columnsFrom": [
+            "exercise_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "workout_exercises_session_id_fkey": {
+          "name": "workout_exercises_session_id_fkey",
+          "tableFrom": "workout_exercises",
+          "tableTo": "workout_sessions",
+          "columnsFrom": [
+            "session_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {
+        "Users can delete their own workout exercises": {
+          "name": "Users can delete their own workout exercises",
+          "as": "PERMISSIVE",
+          "for": "DELETE",
+          "to": [
+            "public"
+          ],
+          "using": "(EXISTS ( SELECT 1\n   FROM workout_sessions\n  WHERE ((workout_sessions.id = workout_exercises.session_id) AND (workout_sessions.user_id = auth.uid()))))"
+        },
+        "Users can update their own workout exercises": {
+          "name": "Users can update their own workout exercises",
+          "as": "PERMISSIVE",
+          "for": "UPDATE",
+          "to": [
+            "public"
+          ]
+        },
+        "Users can insert their own workout exercises": {
+          "name": "Users can insert their own workout exercises",
+          "as": "PERMISSIVE",
+          "for": "INSERT",
+          "to": [
+            "public"
+          ]
+        },
+        "Users can view their own workout exercises": {
+          "name": "Users can view their own workout exercises",
+          "as": "PERMISSIVE",
+          "for": "SELECT",
+          "to": [
+            "public"
+          ]
+        }
+      },
+      "checkConstraints": {
+        "workout_exercises_reps_check": {
+          "name": "workout_exercises_reps_check",
+          "value": "(reps > 0) AND (reps <= 2900)"
+        },
+        "workout_exercises_sets_check": {
+          "name": "workout_exercises_sets_check",
+          "value": "(sets > 0) AND (sets <= 2900)"
+        },
+        "workout_exercises_weight_check": {
+          "name": "workout_exercises_weight_check",
+          "value": "(weight > (0)::numeric) AND (weight <= (2900)::numeric)"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.workout_schedule": {
+      "name": "workout_schedule",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "muscle_group_id": {
+          "name": "muscle_group_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "day_of_week": {
+          "name": "day_of_week",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "workout_schedule_muscle_group_id_fkey": {
+          "name": "workout_schedule_muscle_group_id_fkey",
+          "tableFrom": "workout_schedule",
+          "tableTo": "muscle_groups",
+          "columnsFrom": [
+            "muscle_group_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "workout_schedule_user_id_fkey": {
+          "name": "workout_schedule_user_id_fkey",
+          "tableFrom": "workout_schedule",
+          "tableTo": "users",
+          "schemaTo": "auth",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "workout_schedule_user_id_muscle_group_id_day_of_week_key": {
+          "name": "workout_schedule_user_id_muscle_group_id_day_of_week_key",
+          "nullsNotDistinct": false,
+          "columns": [
+            "user_id",
+            "muscle_group_id",
+            "day_of_week"
+          ]
+        }
+      },
+      "policies": {
+        "Users can delete their own workout schedule": {
+          "name": "Users can delete their own workout schedule",
+          "as": "PERMISSIVE",
+          "for": "DELETE",
+          "to": [
+            "public"
+          ],
+          "using": "(auth.uid() = user_id)"
+        },
+        "Users can update their own workout schedule": {
+          "name": "Users can update their own workout schedule",
+          "as": "PERMISSIVE",
+          "for": "UPDATE",
+          "to": [
+            "public"
+          ]
+        },
+        "Users can insert their own workout schedule": {
+          "name": "Users can insert their own workout schedule",
+          "as": "PERMISSIVE",
+          "for": "INSERT",
+          "to": [
+            "public"
+          ]
+        },
+        "Users can view their own workout schedule": {
+          "name": "Users can view their own workout schedule",
+          "as": "PERMISSIVE",
+          "for": "SELECT",
+          "to": [
+            "public"
+          ]
+        }
+      },
+      "checkConstraints": {
+        "workout_schedule_day_of_week_check": {
+          "name": "workout_schedule_day_of_week_check",
+          "value": "(day_of_week >= 0) AND (day_of_week <= 6)"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.workout_sessions": {
+      "name": "workout_sessions",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "date": {
+          "name": "date",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "workout_sessions_user_id_fkey": {
+          "name": "workout_sessions_user_id_fkey",
+          "tableFrom": "workout_sessions",
+          "tableTo": "users",
+          "schemaTo": "auth",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "workout_sessions_user_id_date_key": {
+          "name": "workout_sessions_user_id_date_key",
+          "nullsNotDistinct": false,
+          "columns": [
+            "user_id",
+            "date"
+          ]
+        }
+      },
+      "policies": {
+        "Users can delete their own workout sessions": {
+          "name": "Users can delete their own workout sessions",
+          "as": "PERMISSIVE",
+          "for": "DELETE",
+          "to": [
+            "public"
+          ],
+          "using": "(auth.uid() = user_id)"
+        },
+        "Users can update their own workout sessions": {
+          "name": "Users can update their own workout sessions",
+          "as": "PERMISSIVE",
+          "for": "UPDATE",
+          "to": [
+            "public"
+          ]
+        },
+        "Users can insert their own workout sessions": {
+          "name": "Users can insert their own workout sessions",
+          "as": "PERMISSIVE",
+          "for": "INSERT",
+          "to": [
+            "public"
+          ]
+        },
+        "Users can view their own workout sessions": {
+          "name": "Users can view their own workout sessions",
+          "as": "PERMISSIVE",
+          "for": "SELECT",
+          "to": [
+            "public"
+          ]
+        }
+      },
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    }
+  },
+  "enums": {},
+  "schemas": {},
+  "sequences": {},
+  "roles": {},
+  "policies": {},
+  "views": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}

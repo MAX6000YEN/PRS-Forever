@@ -18,6 +18,7 @@ interface Exercise {
   description?: string
   external_link?: string
   external_link_name?: string
+  rest_time: number
   muscle_groups: {
     id: string
     name: string
@@ -44,9 +45,12 @@ interface ManagementInterfaceProps {
 export default function ManagementInterface({ 
   muscleGroups, 
   exercises, 
-  workoutSchedule, 
+  workoutSchedule: initialWorkoutSchedule, 
   userId 
 }: ManagementInterfaceProps) {
+  // Lift workout schedule state up to prevent data loss when switching tabs
+  const [workoutSchedule, setWorkoutSchedule] = useState(initialWorkoutSchedule)
+
   return (
     <div>
       <div className="max-w-7xl mx-auto">
@@ -60,6 +64,7 @@ export default function ManagementInterface({
             <MuscleGroupsTab 
               muscleGroups={muscleGroups}
               workoutSchedule={workoutSchedule}
+              onWorkoutScheduleChange={setWorkoutSchedule}
               userId={userId}
             />
           </TabsContent>

@@ -24,15 +24,16 @@ interface WorkoutScheduleItem {
 interface MuscleGroupsTabProps {
   muscleGroups: MuscleGroup[]
   workoutSchedule: WorkoutScheduleItem[]
+  onWorkoutScheduleChange: (schedule: WorkoutScheduleItem[]) => void
   userId: string
 }
 
 export default function MuscleGroupsTab({ 
   muscleGroups, 
-  workoutSchedule: initialSchedule, 
+  workoutSchedule, 
+  onWorkoutScheduleChange,
   userId 
 }: MuscleGroupsTabProps) {
-  const [workoutSchedule, setWorkoutSchedule] = useState(initialSchedule)
   const [isLoading, setIsLoading] = useState(false)
   const supabase = createClient()
 
@@ -111,8 +112,8 @@ export default function MuscleGroupsTab({
 
         if (error) throw error
 
-        setWorkoutSchedule(prev => 
-          prev.filter(item => item.id !== existingItem.id)
+        onWorkoutScheduleChange(
+          workoutSchedule.filter(item => item.id !== existingItem.id)
         )
       } else {
         // Add to schedule
@@ -134,7 +135,7 @@ export default function MuscleGroupsTab({
 
         if (error) throw error
 
-        setWorkoutSchedule(prev => [...prev, data])
+        onWorkoutScheduleChange([...workoutSchedule, data])
       }
     } catch (error) {
       console.error('Error updating workout schedule:', error)
@@ -156,8 +157,8 @@ export default function MuscleGroupsTab({
 
       if (error) throw error
 
-      setWorkoutSchedule(prev => 
-        prev.filter(item => item.day_of_week !== dayOfWeek)
+      onWorkoutScheduleChange(
+        workoutSchedule.filter(item => item.day_of_week !== dayOfWeek)
       )
     } catch (error) {
       console.error('Error clearing workout schedule:', error)

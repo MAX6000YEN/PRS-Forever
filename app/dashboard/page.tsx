@@ -65,7 +65,18 @@ export default async function Dashboard() {
   let todaysExercises: typeof exercises.$inferSelect[] = [];
   if (muscleGroupIds.length > 0) {
     todaysExercises = await dbConnection
-      .select()
+      .select({
+        id: exercises.id,
+        name: exercises.name,
+        muscleGroupId: exercises.muscleGroupId,
+        userId: exercises.userId,
+        createdAt: exercises.createdAt,
+        hidden: exercises.hidden,
+        description: exercises.description,
+        externalLink: exercises.externalLink,
+        externalLinkName: exercises.externalLinkName,
+        restTime: exercises.restTime
+      })
       .from(exercises)
       .where(
         and(
@@ -132,6 +143,7 @@ export default async function Dashboard() {
             description: exercise.description || undefined,
             external_link: exercise.externalLink || undefined,
             external_link_name: exercise.externalLinkName || undefined,
+            rest_time: exercise.restTime,
             previousData: !!previousExerciseData ? {
               weight: Number(previousExerciseData?.weight || 0),
               reps: previousExerciseData?.reps || 0,
