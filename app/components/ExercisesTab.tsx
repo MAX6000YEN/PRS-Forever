@@ -205,7 +205,7 @@ export default function ExercisesTab({
       }
 
       // Create new exercises for each selected muscle group
-      const newExercises = []
+      const newExercises: Exercise[] = []
       for (const muscleGroupId of editingSelectedMuscleGroups) {
         const { data, error } = await supabase
           .from('exercises')
