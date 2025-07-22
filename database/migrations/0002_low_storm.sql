@@ -1,0 +1,2 @@
+ALTER TABLE "exercises" DROP CONSTRAINT "exercises_name_user_id_key";--> statement-breakpoint
+ALTER TABLE "exercises" ADD CONSTRAINT "exercises_name_user_id_muscle_group_id_key" UNIQUE("name","user_id","muscle_group_id");

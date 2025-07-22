@@ -85,7 +85,7 @@ export default function Login() {
 
   if (isResetMode) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-4">
+      <div className="min-h-screen flex items-center justify-center p-6">
         <Card className="w-full max-w-md">
           <CardHeader className="text-center">
             <CardTitle className="text-4xl font-extrabold">RPS</CardTitle>
@@ -132,7 +132,7 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4">
+    <div className="min-h-screen flex items-center justify-center p-6">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <CardTitle className="text-4xl font-extrabold">RPS</CardTitle>

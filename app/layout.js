@@ -2,6 +2,7 @@ import "./globals.css";
 import { UserProvider } from './components/UserProvider'
 import ClientLayout from './components/ClientLayout'
 import { Funnel_Display } from 'next/font/google'
+import { Toaster } from "@/components/ui/sonner"
 
 const funnelDisplay = Funnel_Display({
   subsets: ['latin'],
@@ -31,6 +32,7 @@ export default function RootLayout({ children }) {
             </footer>
           </ClientLayout>
         </UserProvider>
+        <Toaster />
       </body>
     </html>
   );

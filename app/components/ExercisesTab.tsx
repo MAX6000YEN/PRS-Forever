@@ -42,28 +42,79 @@ export default function ExercisesTab({
   const [showAddForm, setShowAddForm] = useState(false)
   const [newExercise, setNewExercise] = useState({
     name: '',
-    muscle_group_id: '',
+    selectedMuscleGroups: [] as string[],
     description: '',
     external_link: '',
     external_link_name: ''
   })
   const [editingExercise, setEditingExercise] = useState<Exercise | null>(null)
+  const [editingSelectedMuscleGroups, setEditingSelectedMuscleGroups] = useState<string[]>([])
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null)
   const supabase = createClient()
 
-  // Group exercises by muscle group
-  const exercisesByMuscleGroup = exercises.reduce((acc, exercise) => {
-    const muscleGroupName = exercise.muscle_groups.name
-    if (!acc[muscleGroupName]) {
-      acc[muscleGroupName] = []
-    }
-    acc[muscleGroupName].push(exercise)
-    return acc
-  }, {} as Record<string, Exercise[]>)
+  // Group exercises by muscle group, but avoid duplicates by exercise name
+  const getUniqueExercisesByMuscleGroup = () => {
+    const result: Record<string, Exercise[]> = {}
+    const processedExercises = new Set<string>()
+
+    // First, group all exercises by name to understand their muscle group associations
+    const exercisesByName = exercises.reduce((acc, exercise) => {
+      if (!acc[exercise.name]) {
+        acc[exercise.name] = []
+      }
+      acc[exercise.name].push(exercise)
+      return acc
+    }, {} as Record<string, Exercise[]>)
+
+    // For each muscle group, add unique exercises
+    muscleGroups.forEach(muscleGroup => {
+      const muscleGroupName = muscleGroup.name
+      result[muscleGroupName] = []
+
+      // Find exercises that belong to this muscle group
+      Object.entries(exercisesByName).forEach(([exerciseName, exerciseVariants]) => {
+        const exerciseInThisGroup = exerciseVariants.find(ex => ex.muscle_group_id === muscleGroup.id)
+        
+        if (exerciseInThisGroup) {
+          // Add the exercise with information about all its muscle groups
+          const allMuscleGroups = exerciseVariants.map(ex => ({
+            id: ex.muscle_group_id,
+            name: ex.muscle_groups.name
+          }))
+          
+          result[muscleGroupName].push({
+            ...exerciseInThisGroup,
+            allMuscleGroups // Add this property to track all muscle groups
+          } as Exercise & { allMuscleGroups: Array<{id: string, name: string}> })
+        }
+      })
+    })
+
+    return result
+  }
+
+  const exercisesByMuscleGroup = getUniqueExercisesByMuscleGroup()
+
+  const handleMuscleGroupToggle = (muscleGroupId: string) => {
+    setNewExercise(prev => ({
+      ...prev,
+      selectedMuscleGroups: prev.selectedMuscleGroups.includes(muscleGroupId)
+        ? prev.selectedMuscleGroups.filter(id => id !== muscleGroupId)
+        : [...prev.selectedMuscleGroups, muscleGroupId]
+    }))
+  }
+
+  const handleEditingMuscleGroupToggle = (muscleGroupId: string) => {
+    setEditingSelectedMuscleGroups(prev => 
+      prev.includes(muscleGroupId)
+        ? prev.filter(id => id !== muscleGroupId)
+        : [...prev, muscleGroupId]
+    )
+  }
 
   const handleAddExercise = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!newExercise.name.trim() || !newExercise.muscle_group_id) return
+    if (!newExercise.name.trim() || newExercise.selectedMuscleGroups.length === 0) return
 
     setIsLoading(true)
     try {
@@ -77,32 +128,37 @@ export default function ExercisesTab({
         return
       }
 
-      const { data, error } = await supabase
-        .from('exercises')
-        .insert({
-          name: newExercise.name.trim(),
-          muscle_group_id: newExercise.muscle_group_id,
-          user_id: userId,
-          hidden: false,
-          description: newExercise.description.trim() || null,
-          external_link: newExercise.external_link.trim() || null,
-          external_link_name: newExercise.external_link_name.trim() || null
-        })
-        .select(`
-          *,
-          muscle_groups (
-            id,
-            name
-          )
-        `)
-        .single()
+      // Create exercise for each selected muscle group
+      const exercisePromises = newExercise.selectedMuscleGroups.map(async (muscleGroupId) => {
+        const { data, error } = await supabase
+          .from('exercises')
+          .insert({
+            name: newExercise.name.trim(),
+            muscle_group_id: muscleGroupId,
+            user_id: userId,
+            hidden: false,
+            description: newExercise.description.trim() || null,
+            external_link: newExercise.external_link.trim() || null,
+            external_link_name: newExercise.external_link_name.trim() || null
+          })
+          .select(`
+            *,
+            muscle_groups (
+              id,
+              name
+            )
+          `)
+          .single()
 
-      if (error) throw error
+        if (error) throw error
+        return data
+      })
 
-      setExercises(prev => [...prev, data])
+      const newExercises = await Promise.all(exercisePromises)
+      setExercises(prev => [...prev, ...newExercises])
       setNewExercise({ 
         name: '', 
-        muscle_group_id: '', 
+        selectedMuscleGroups: [], 
         description: '', 
         external_link: '', 
         external_link_name: '' 
@@ -118,46 +174,74 @@ export default function ExercisesTab({
 
   const handleUpdateExercise = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!editingExercise) return
+    if (!editingExercise || editingSelectedMuscleGroups.length === 0) return
 
     setIsLoading(true)
     try {
-      // Check for duplicates (excluding current exercise)
-      const isDuplicate = exercises.some(
-        ex => ex.id !== editingExercise.id && 
-        ex.name.toLowerCase() === editingExercise.name.toLowerCase().trim()
-      )
+      // Check for duplicates only if the name has changed
+      const originalName = editingExercise.name.toLowerCase()
+      const newName = editingExercise.name.toLowerCase().trim()
+      
+      if (originalName !== newName) {
+        const isDuplicate = exercises.some(
+          ex => ex.name.toLowerCase() === newName && ex.name.toLowerCase() !== originalName
+        )
 
-      if (isDuplicate) {
-        alert('An exercise with this name already exists.')
-        return
+        if (isDuplicate) {
+          alert('An exercise with this name already exists.')
+          return
+        }
       }
 
-      const { data, error } = await supabase
+      // Delete ALL exercises with the same name (since we're updating all instances)
+      const { error: deleteError } = await supabase
         .from('exercises')
-        .update({
-          name: editingExercise.name.trim(),
-          muscle_group_id: editingExercise.muscle_group_id,
-          description: editingExercise.description?.trim() || null,
-          external_link: editingExercise.external_link?.trim() || null,
-          external_link_name: editingExercise.external_link_name?.trim() || null
-        })
-        .eq('id', editingExercise.id)
-        .select(`
-          *,
-          muscle_groups (
-            id,
-            name
-          )
-        `)
-        .single()
+        .delete()
+        .eq('name', editingExercise.name)
+        .eq('user_id', userId)
 
-      if (error) throw error
+      if (deleteError) {
+        throw deleteError
+      }
 
-      setExercises(prev => 
-        prev.map(ex => ex.id === editingExercise.id ? data : ex)
-      )
+      // Create new exercises for each selected muscle group
+      const newExercises = []
+      for (const muscleGroupId of editingSelectedMuscleGroups) {
+        const { data, error } = await supabase
+          .from('exercises')
+          .insert({
+            name: editingExercise.name.trim(),
+            muscle_group_id: muscleGroupId,
+            user_id: userId,
+            hidden: editingExercise.hidden,
+            description: editingExercise.description?.trim() || null,
+            external_link: editingExercise.external_link?.trim() || null,
+            external_link_name: editingExercise.external_link_name?.trim() || null
+          })
+          .select(`
+            *,
+            muscle_groups (
+              id,
+              name
+            )
+          `)
+          .single()
+
+        if (error) {
+          throw error
+        }
+        
+        newExercises.push(data)
+      }
+      
+      // Update the exercises list: remove all exercises with the same name and add new ones
+      setExercises(prev => [
+        ...prev.filter(ex => ex.name !== editingExercise.name),
+        ...newExercises
+      ])
+      
       setEditingExercise(null)
+      setEditingSelectedMuscleGroups([])
     } catch (error) {
       console.error('Error updating exercise:', error)
       alert('Error updating exercise. Please try again.')
@@ -235,29 +319,15 @@ export default function ExercisesTab({
                 id="exercise-name"
                 type="text"
                 value={newExercise.name}
-                onChange={(e) => setNewExercise(prev => ({ ...prev, name: e.target.value }))}
+                onChange={(e) => setNewExercise(prev => ({ ...prev, name: e.target.value.slice(0, 100) }))}
                 placeholder="Enter exercise name"
                 required
+                maxLength={100}
                 className="glass-input text-white placeholder:text-white/50"
               />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="muscle-group" className="text-white">Muscle Group</Label>
-              <select
-                id="muscle-group"
-                value={newExercise.muscle_group_id}
-                onChange={(e) => setNewExercise(prev => ({ ...prev, muscle_group_id: e.target.value }))}
-                className="w-full p-3 glass-input text-white"
-                required
-              >
-                <option value="">Select muscle group</option>
-                {muscleGroups.map(mg => (
-                  <option key={mg.id} value={mg.id} className="capitalize bg-black">
-                    {mg.name}
-                  </option>
-                ))}
-              </select>
+              <div className="text-xs text-gray-400">
+                {newExercise.name.length}/100 characters
+              </div>
             </div>
             
             <div className="space-y-2">
@@ -282,11 +352,14 @@ export default function ExercisesTab({
                 id="link-name"
                 type="text"
                 value={newExercise.external_link_name}
-                onChange={(e) => setNewExercise(prev => ({ ...prev, external_link_name: e.target.value }))}
+                onChange={(e) => setNewExercise(prev => ({ ...prev, external_link_name: e.target.value.slice(0, 100) }))}
                 placeholder="e.g., 'Tutorial Video', 'Form Guide'"
                 maxLength={100}
                 className="glass-input text-white placeholder:text-white/50"
               />
+              <div className="text-xs text-gray-400">
+                {newExercise.external_link_name.length}/100 characters
+              </div>
             </div>
             
             <div className="space-y-2">
@@ -304,9 +377,30 @@ export default function ExercisesTab({
                 {newExercise.external_link.length}/150 characters
               </div>
             </div>
+
+            {/* Muscle Group Selection Buttons */}
+            <div className="space-y-2">
+              <Label className="text-white">Select Muscle Groups</Label>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                {muscleGroups.map(muscleGroup => (
+                  <Button
+                    key={muscleGroup.id}
+                    type="button"
+                    onClick={() => handleMuscleGroupToggle(muscleGroup.id)}
+                    variant={newExercise.selectedMuscleGroups.includes(muscleGroup.id) ? "default" : "outline"}
+                    className="capitalize"
+                  >
+                    {muscleGroup.name}
+                  </Button>
+                ))}
+              </div>
+              {newExercise.selectedMuscleGroups.length === 0 && (
+                <p className="text-xs text-red-400">Please select at least one muscle group</p>
+              )}
+            </div>
             
             <div className="flex flex-col sm:flex-row gap-3">
-              <Button type="submit" disabled={isLoading} className="btn-primary">
+              <Button type="submit" disabled={isLoading || newExercise.selectedMuscleGroups.length === 0} className="btn-primary">
                 {isLoading ? 'Adding...' : 'Add Exercise'}
               </Button>
               <Button
@@ -317,7 +411,7 @@ export default function ExercisesTab({
                   setShowAddForm(false)
                   setNewExercise({ 
                     name: '', 
-                    muscle_group_id: '', 
+                    selectedMuscleGroups: [], 
                     description: '', 
                     external_link: '', 
                     external_link_name: '' 
@@ -351,26 +445,14 @@ export default function ExercisesTab({
                         <Input
                           type="text"
                           value={editingExercise.name}
-                          onChange={(e) => setEditingExercise(prev => prev ? { ...prev, name: e.target.value } : null)}
+                          onChange={(e) => setEditingExercise(prev => prev ? { ...prev, name: e.target.value.slice(0, 100) } : null)}
                           className="glass-input text-white"
+                          maxLength={100}
                           required
                         />
-                      </div>
-                      
-                      <div className="space-y-2">
-                        <Label className="text-white">Muscle Group</Label>
-                        <select
-                          value={editingExercise.muscle_group_id}
-                          onChange={(e) => setEditingExercise(prev => prev ? { ...prev, muscle_group_id: e.target.value } : null)}
-                          className="w-full p-2 glass-input text-white"
-                          required
-                        >
-                          {muscleGroups.map(mg => (
-                            <option key={mg.id} value={mg.id} className="capitalize bg-black">
-                              {mg.name}
-                            </option>
-                          ))}
-                        </select>
+                        <div className="text-xs text-gray-400">
+                          {editingExercise.name.length}/100 characters
+                        </div>
                       </div>
                       
                       <div className="space-y-2">
@@ -389,10 +471,13 @@ export default function ExercisesTab({
                         <Input
                           type="text"
                           value={editingExercise.external_link_name || ''}
-                          onChange={(e) => setEditingExercise(prev => prev ? { ...prev, external_link_name: e.target.value } : null)}
+                          onChange={(e) => setEditingExercise(prev => prev ? { ...prev, external_link_name: e.target.value.slice(0, 100) } : null)}
                           className="glass-input text-white"
                           maxLength={100}
                         />
+                        <div className="text-xs text-gray-400">
+                          {(editingExercise.external_link_name || '').length}/100 characters
+                        </div>
                       </div>
                       
                       <div className="space-y-2">
@@ -405,9 +490,35 @@ export default function ExercisesTab({
                           maxLength={150}
                         />
                       </div>
+
+                      <div className="space-y-2">
+                        <Label className="text-white">Muscle Groups</Label>
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                          {muscleGroups.map(mg => (
+                            <Button
+                              key={mg.id}
+                              type="button"
+                              onClick={() => handleEditingMuscleGroupToggle(mg.id)}
+                              disabled={isLoading}
+                              variant={editingSelectedMuscleGroups.includes(mg.id) ? "default" : "outline"}
+                              className="capitalize"
+                            >
+                              {mg.name}
+                            </Button>
+                          ))}
+                        </div>
+                        {editingSelectedMuscleGroups.length === 0 && (
+                          <p className="text-red-400 text-sm">Please select at least one muscle group</p>
+                        )}
+                      </div>
                       
                       <div className="flex flex-col sm:flex-row gap-2">
-                        <Button type="submit" disabled={isLoading} size="sm" className="btn-primary">
+                        <Button 
+                          type="submit" 
+                          disabled={isLoading || editingSelectedMuscleGroups.length === 0} 
+                          size="sm" 
+                          className="btn-primary"
+                        >
                           {isLoading ? 'Saving...' : 'Save'}
                         </Button>
                         <Button 
@@ -415,7 +526,10 @@ export default function ExercisesTab({
                           variant="outline"
                           size="sm"
                           className="glass-button"
-                          onClick={() => setEditingExercise(null)}
+                          onClick={() => {
+                            setEditingExercise(null)
+                            setEditingSelectedMuscleGroups([])
+                          }}
                         >
                           Cancel
                         </Button>
@@ -424,18 +538,39 @@ export default function ExercisesTab({
                   ) : (
                     <div className="space-y-2">
                       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 flex-wrap">
                           <span className={`font-medium ${exercise.hidden ? 'text-gray-400' : 'text-white'}`}>
                             {exercise.name}
                           </span>
                           {exercise.hidden && <Badge variant="secondary">Hidden</Badge>}
+                          
+                          {/* Show "Also in" badges for other muscle groups */}
+                          {(exercise as any).allMuscleGroups && (exercise as any).allMuscleGroups.length > 1 && (
+                            <div className="flex items-center gap-1 flex-wrap">
+                              <span className="text-xs text-gray-400">Also in:</span>
+                              {(exercise as any).allMuscleGroups
+                                .filter((mg: any) => mg.name !== muscleGroupName)
+                                .map((mg: any) => (
+                                  <Badge key={mg.id} variant="outline" className="text-xs capitalize">
+                                    {mg.name}
+                                  </Badge>
+                                ))
+                              }
+                            </div>
+                          )}
                         </div>
                         <div className="flex gap-2">
                           <Button
                             size="sm"
                             variant="outline"
                             className="glass-button"
-                            onClick={() => setEditingExercise(exercise)}
+                            onClick={() => {
+                              setEditingExercise(exercise)
+                              // Find all exercises with the same name to get their muscle groups
+                              const exercisesWithSameName = exercises.filter(ex => ex.name === exercise.name)
+                              const muscleGroupIds = exercisesWithSameName.map(ex => ex.muscle_group_id)
+                              setEditingSelectedMuscleGroups(muscleGroupIds)
+                            }}
                           >
                             Edit
                           </Button>

@@ -33,7 +33,7 @@
   }
   body {
     @apply bg-background text-foreground;
-    background: linear-gradient(120deg, #4b2e80 0%, #1f1335 100%);
+    background: linear-gradient(120deg, hsl(271, 45%, 39%) 0%, hsl(264, 95%, 15%) 100%);
     background-attachment: fixed;
     font-family: var(--font-funnel-display), sans-serif;
     min-height: 100vh;
@@ -96,4 +96,10 @@ input[type="number"]:focus {
 
 .btn-primary:hover {
   @apply shadow-lg shadow-purple-500/25;
+}
+
+/* Default gradient background */
+.bg-loading-gradient {
+  background: linear-gradient(120deg, hsl(271, 45%, 39%) 0%, hsl(264, 95%, 15%) 100%);
+  background-attachment: fixed;
 }

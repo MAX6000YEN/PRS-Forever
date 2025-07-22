@@ -400,11 +400,11 @@ export default function StatisticsInterface() {
           </div>
         </div>
 
-        <Tabs defaultValue="weekly" className="w-full">
+        <Tabs defaultValue="muscle-groups" className="w-full">
           <TabsList className="grid w-full grid-cols-3 glass">
-            <TabsTrigger value="weekly">Weekly Weight</TabsTrigger>
-            <TabsTrigger value="muscle-groups">Muscle Groups</TabsTrigger>
-            <TabsTrigger value="daily">Daily Weight</TabsTrigger>
+            <TabsTrigger value="muscle-groups">Groups</TabsTrigger>
+            <TabsTrigger value="weekly">Weekly</TabsTrigger>
+            <TabsTrigger value="daily">Daily</TabsTrigger>
           </TabsList>
 
           <TabsContent value="weekly" className="space-y-6 mt-6">

@@ -25,23 +25,23 @@ export const exercises = pgTable("exercises", {
 	name: varchar({ length: 100 }).notNull(),
 	muscleGroupId: uuid("muscle_group_id"),
 	userId: uuid("user_id"),
+	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow(),
 	hidden: boolean().default(false).notNull(),
 	description: varchar({ length: 300 }),
 	externalLink: varchar("external_link", { length: 150 }),
 	externalLinkName: varchar("external_link_name", { length: 100 }),
-	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow(),
 }, (table) => [
 	foreignKey({
-			columns: [table.muscleGroupId],
-			foreignColumns: [muscleGroups.id],
-			name: "exercises_muscle_group_id_fkey"
-		}).onDelete("cascade"),
+		columns: [table.muscleGroupId],
+		foreignColumns: [muscleGroups.id],
+		name: "exercises_muscle_group_id_fkey"
+	}).onDelete("cascade"),
 	foreignKey({
-			columns: [table.userId],
-			foreignColumns: [usersInAuth.id],
-			name: "exercises_user_id_fkey"
-		}).onDelete("cascade"),
-	unique("exercises_name_user_id_key").on(table.name, table.userId),
+		columns: [table.userId],
+		foreignColumns: [usersInAuth.id],
+		name: "exercises_user_id_fkey"
+	}).onDelete("cascade"),
+	unique("exercises_name_user_id_muscle_group_id_key").on(table.name, table.userId, table.muscleGroupId),
 	pgPolicy("Users can delete their own exercises", { as: "permissive", for: "delete", to: ["public"], using: sql`(auth.uid() = user_id)` }),
 	pgPolicy("Users can update their own exercises", { as: "permissive", for: "update", to: ["public"] }),
 	pgPolicy("Users can insert their own exercises", { as: "permissive", for: "insert", to: ["public"] }),

@@ -185,7 +185,7 @@ export default function MuscleGroupsTab({
           const dayOfWeek = day.index
           return (
             <Card key={`${dayOfWeek}-${day.isToday ? 'today' : 'regular'}`} className={day.isToday ? 'border-blue-500' : ''}>
-              <CardHeader>
+              <CardHeader className="p-2">
                 <div className="flex items-center gap-2">
                   <CardTitle className="text-xl">
                     {day.name}
@@ -200,7 +200,7 @@ export default function MuscleGroupsTab({
                   </p>
                 )}
               </CardHeader>
-              <CardContent>
+              <CardContent className="p-0">
                 {/* Muscle group toggles with "No workout this day" button included */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                   {muscleGroups.map(muscleGroup => (

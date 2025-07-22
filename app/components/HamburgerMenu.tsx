@@ -1,8 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
+import LoadingPage from './LoadingPage'
 
 interface HamburgerMenuProps {
   userEmail: string
@@ -11,15 +12,32 @@ interface HamburgerMenuProps {
 
 export default function HamburgerMenu({ userEmail, userName }: HamburgerMenuProps) {
   const [isOpen, setIsOpen] = useState(false)
+  const [isNavigating, setIsNavigating] = useState(false)
   const router = useRouter()
+  const pathname = usePathname()
   const supabase = createClient()
+
+  // Reset navigation state when pathname changes
+  useEffect(() => {
+    setIsNavigating(false)
+  }, [pathname])
 
   const handleLogout = async () => {
     await supabase.auth.signOut()
     router.push('/login')
   }
 
+  const handleNavigation = (path: string) => {
+    setIsOpen(false)
+    setIsNavigating(true)
+    router.push(path)
+  }
+
   const displayName = userName || userEmail.split('@')[0]
+
+  if (isNavigating) {
+    return <LoadingPage />
+  }
 
   return (
     <>
@@ -48,40 +66,28 @@ export default function HamburgerMenu({ userEmail, userName }: HamburgerMenuProp
             {/* Menu Items */}
             <div className="space-y-6">
               <button
-                onClick={() => {
-                  setIsOpen(false)
-                  router.push('/dashboard')
-                }}
+                onClick={() => handleNavigation('/dashboard')}
                 className="block w-full text-xl text-white hover:text-gray-300 transition-colors py-3"
               >
                 Dashboard
               </button>
               
               <button
-                onClick={() => {
-                  setIsOpen(false)
-                  router.push('/statistics')
-                }}
+                onClick={() => handleNavigation('/statistics')}
                 className="block w-full text-xl text-white hover:text-gray-300 transition-colors py-3"
               >
                 Statistics
               </button>
               
               <button
-                onClick={() => {
-                  setIsOpen(false)
-                  router.push('/management')
-                }}
+                onClick={() => handleNavigation('/management')}
                 className="block w-full text-xl text-white hover:text-gray-300 transition-colors py-3"
               >
                 Management
               </button>
               
               <button
-                onClick={() => {
-                  setIsOpen(false)
-                  router.push('/account')
-                }}
+                onClick={() => handleNavigation('/account')}
                 className="block w-full text-xl text-white hover:text-gray-300 transition-colors py-3"
               >
                 Settings

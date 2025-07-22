@@ -15,6 +15,13 @@
       "when": 1753043516847,
       "tag": "0001_shocking_post",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1753213546130,
+      "tag": "0002_low_storm",
+      "breakpoints": true
     }
   ]
 }
