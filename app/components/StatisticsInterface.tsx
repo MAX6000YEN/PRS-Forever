@@ -289,7 +289,7 @@ export default function StatisticsInterface() {
   // Show loading state while user is being fetched
   if (userLoading || !user) {
     return (
-      <div className="p-6 space-y-6">
+      <div className="space-y-6">
         <div className="max-w-7xl mx-auto space-y-6">
           <div className="glass-card p-2">
             <div className="text-white text-center py-8">Loading...</div>
@@ -355,7 +355,7 @@ export default function StatisticsInterface() {
   }
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="space-y-6">
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Debug info */}
 
@@ -415,12 +415,20 @@ export default function StatisticsInterface() {
           <TabsContent value="muscle-groups" className="space-y-6 mt-6">
             {muscleGroups.map(muscleGroup => {
               const data = muscleGroupData[muscleGroup.name] || []
+              const hasData = data.length > 0
               return (
                 <div key={muscleGroup.id} className="space-y-2">
-                  <h2 className="text-2xl font-bold text-white capitalize">
-                    {muscleGroup.name}
-                  </h2>
-                  {renderChart(data, data.length > 0)}
+                  <div className="flex items-center gap-3">
+                    <h2 className="text-2xl font-bold text-white capitalize">
+                      {muscleGroup.name}
+                    </h2>
+                    {!hasData && (
+                      <span className="px-3 py-1 bg-gray-600/50 text-gray-300 text-sm rounded-full border border-gray-500/30">
+                        No data for now
+                      </span>
+                    )}
+                  </div>
+                  {hasData && renderChart(data, true)}
                 </div>
               )
             })}
@@ -434,10 +442,18 @@ export default function StatisticsInterface() {
             
             {['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'].map(weekday => {
               const data = weekdayData[weekday] || []
+              const hasData = data.length > 0
               return (
                 <div key={weekday} className="space-y-2">
-                  <h2 className="text-2xl font-bold text-white">{weekday}</h2>
-                  {renderChart(data, data.length > 0)}
+                  <div className="flex items-center gap-3">
+                    <h2 className="text-2xl font-bold text-white">{weekday}</h2>
+                    {!hasData && (
+                      <span className="px-3 py-1 bg-gray-600/50 text-gray-300 text-sm rounded-full border border-gray-500/30">
+                        No data for now
+                      </span>
+                    )}
+                  </div>
+                  {hasData && renderChart(data, true)}
                 </div>
               )
             })}

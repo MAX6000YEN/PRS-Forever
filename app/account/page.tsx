@@ -204,7 +204,7 @@ export default function AccountPage() {
   }
 
   return (
-    <div className="min-h-screen p-2">
+    <div className="min-h-screen p-4 pb-20">
       <div className="max-w-4xl mx-auto">
         <h1 className="text-3xl font-bold text-white mb-8">Settings</h1>
         

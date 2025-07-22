@@ -427,7 +427,9 @@ export default function ExercisesTab({
 
       {/* Exercises List */}
       <div className="space-y-6">
-        {Object.entries(exercisesByMuscleGroup).map(([muscleGroupName, groupExercises]) => (
+        {Object.entries(exercisesByMuscleGroup)
+          .filter(([muscleGroupName, groupExercises]) => groupExercises.length > 0)
+          .map(([muscleGroupName, groupExercises]) => (
           <div key={muscleGroupName} className="glass-card p-2">
             <h3 className="text-xl font-semibold text-white mb-4 capitalize">{muscleGroupName}</h3>
             <div className="space-y-3">

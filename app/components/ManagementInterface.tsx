@@ -48,7 +48,7 @@ export default function ManagementInterface({
   userId 
 }: ManagementInterfaceProps) {
   return (
-    <div className="p-6">
+    <div>
       <div className="max-w-7xl mx-auto">
         <Tabs defaultValue="muscle-groups" className="w-full">
           <TabsList className="grid w-full grid-cols-2 glass">
