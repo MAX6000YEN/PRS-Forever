@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { workoutSessions, workoutExercises } from '@/database/schema'
+import { workoutSessions, workoutExercises, workoutExerciseSets } from '@/database/schema'
 import { eq, and } from 'drizzle-orm'
 import { dbConnection } from '@/app/db-connection'
 
@@ -54,16 +54,33 @@ export async function POST(request: NextRequest) {
 
     // Insert new workout exercises
     if (Object.keys(exerciseData).length > 0) {
-      const workoutExercisesData = Object.entries(exerciseData).map(([exerciseId, data]: [string, any]) => ({
-        sessionId: sessionId,
-        exerciseId: exerciseId,
-        weight: data.weight.toString(),
-        reps: data.reps,
-        sets: data.sets
-      }))
-
-      await dbConnection.insert(workoutExercises)
-        .values(workoutExercisesData)
+      // Process each exercise
+      for (const [exerciseId, data] of Object.entries(exerciseData) as [string, any][]) {
+        // Insert the main workout exercise record
+        const [insertedExercise] = await dbConnection.insert(workoutExercises)
+          .values({
+            sessionId: sessionId,
+            exerciseId: exerciseId,
+            weight: data.weight.toString(),
+            reps: data.reps,
+            sets: data.sets,
+            usesIndividualSets: data.usesIndividualSets || false
+          })
+          .returning({ id: workoutExercises.id })
+        
+        // If using individual sets, insert each set
+        if (data.usesIndividualSets && Array.isArray(data.individualSets) && data.individualSets.length > 0) {
+          const setsData = data.individualSets.map((set: any, index: number) => ({
+            workoutExerciseId: insertedExercise.id,
+            setNumber: index + 1,
+            weight: set.weight.toString(),
+            reps: set.reps
+          }))
+          
+          await dbConnection.insert(workoutExerciseSets)
+            .values(setsData)
+        }
+      }
     }
 
     return NextResponse.json({ message: 'Workout saved successfully!' })

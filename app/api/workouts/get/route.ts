@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { workoutSessions, workoutExercises } from '@/database/schema'
-import { eq, and } from 'drizzle-orm'
+import { workoutSessions, workoutExercises, workoutExerciseSets } from '@/database/schema'
+import { eq, and, asc } from 'drizzle-orm'
 import { dbConnection } from '@/app/db-connection'
 
 export async function GET(request: NextRequest) {
@@ -46,18 +46,38 @@ export async function GET(request: NextRequest) {
       .where(eq(workoutExercises.sessionId, existingSession[0].id))
 
     // Transform the data to match the expected format
-    const exerciseData: Record<string, { weight: number; reps: number; sets: number }> = {}
+    const exerciseData: Record<string, { 
+      weight: number; 
+      reps: number; 
+      sets: number; 
+      usesIndividualSets?: boolean; 
+      individualSets?: { weight: number; reps: number }[] 
+    }> = {}
     
-    exercises.forEach(exercise => {
+    for (const exercise of exercises) {
       // Only process exercises with valid exerciseId
       if (exercise.exerciseId) {
         exerciseData[exercise.exerciseId] = {
           weight: parseFloat(exercise.weight),
           reps: exercise.reps,
-          sets: exercise.sets
+          sets: exercise.sets,
+          usesIndividualSets: exercise.usesIndividualSets || false
+        }
+        
+        // If using individual sets, fetch them
+        if (exercise.usesIndividualSets) {
+          const individualSets = await dbConnection.select()
+            .from(workoutExerciseSets)
+            .where(eq(workoutExerciseSets.workoutExerciseId, exercise.id))
+            .orderBy(asc(workoutExerciseSets.setNumber))
+          
+          exerciseData[exercise.exerciseId].individualSets = individualSets.map(set => ({
+            weight: parseFloat(set.weight),
+            reps: set.reps
+          }))
         }
       }
-    })
+    }
 
     return NextResponse.json({ exerciseData })
   } catch (error) {

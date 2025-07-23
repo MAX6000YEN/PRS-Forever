@@ -17,6 +17,8 @@ interface Exercise {
     weight: number
     reps: number
     sets: number
+    usesIndividualSets?: boolean
+    individualSets?: Array<{ weight: number; reps: number }>
   }
 }
 
@@ -33,10 +35,22 @@ interface WorkoutInterfaceProps {
 
 export default function WorkoutInterface({ workoutData, userId, currentDate }: WorkoutInterfaceProps) {
   const [muscleGroupTotals, setMuscleGroupTotals] = useState<Record<string, number>>({})
-  const [exerciseData, setExerciseData] = useState<Record<string, { weight: number; reps: number; sets: number }>>({})
+  const [exerciseData, setExerciseData] = useState<Record<string, { 
+    weight: number; 
+    reps: number; 
+    sets: number; 
+    usesIndividualSets?: boolean;
+    individualSets?: Array<{ weight: number; reps: number }>;
+  }>>({})
   const [isSaving, setIsSaving] = useState(false)
   const [isWorkoutSaved, setIsWorkoutSaved] = useState(false)
-  const [initialExerciseData, setInitialExerciseData] = useState<Record<string, { weight: number; reps: number; sets: number }>>({})
+  const [initialExerciseData, setInitialExerciseData] = useState<Record<string, { 
+    weight: number; 
+    reps: number; 
+    sets: number;
+    usesIndividualSets?: boolean;
+    individualSets?: Array<{ weight: number; reps: number }>;
+  }>>({})
   const [isLoading, setIsLoading] = useState(true)
 
   // Fetch existing workout data on component mount
@@ -69,7 +83,13 @@ export default function WorkoutInterface({ workoutData, userId, currentDate }: W
     }))
   }, [])
 
-  const handleExerciseDataUpdate = useCallback((exerciseId: string, data: { weight: number; reps: number; sets: number }) => {
+  const handleExerciseDataUpdate = useCallback((exerciseId: string, data: { 
+    weight: number; 
+    reps: number; 
+    sets: number;
+    usesIndividualSets?: boolean;
+    individualSets?: Array<{ weight: number; reps: number }>;
+  }) => {
     setExerciseData(prev => {
       const newData = {
         ...prev,
@@ -176,7 +196,9 @@ export default function WorkoutInterface({ workoutData, userId, currentDate }: W
                  previousData: exerciseData[exercise.id] ? {
                    weight: exerciseData[exercise.id].weight,
                    reps: exerciseData[exercise.id].reps,
-                   sets: exerciseData[exercise.id].sets
+                   sets: exerciseData[exercise.id].sets,
+                   usesIndividualSets: exerciseData[exercise.id].usesIndividualSets,
+                   individualSets: exerciseData[exercise.id].individualSets
                  } : exercise.previousData
                }))
                

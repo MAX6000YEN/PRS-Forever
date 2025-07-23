@@ -16,6 +16,8 @@ interface Exercise {
     weight: number
     reps: number
     sets: number
+    usesIndividualSets?: boolean
+    individualSets?: Array<{ weight: number; reps: number }>
   }
 }
 
@@ -23,7 +25,13 @@ interface MuscleGroupSectionProps {
   muscleGroupName: string
   exercises: Exercise[]
   onMuscleGroupTotalChange: (muscleGroup: string, total: number) => void
-  onExerciseDataUpdate?: (exerciseId: string, data: { weight: number; reps: number; sets: number }) => void
+  onExerciseDataUpdate?: (exerciseId: string, data: { 
+    weight: number; 
+    reps: number; 
+    sets: number;
+    usesIndividualSets?: boolean;
+    individualSets?: Array<{ weight: number; reps: number }>;
+  }) => void
 }
 
 export default function MuscleGroupSection({ 
@@ -32,9 +40,21 @@ export default function MuscleGroupSection({
   onMuscleGroupTotalChange,
   onExerciseDataUpdate
 }: MuscleGroupSectionProps) {
-  const [exerciseData, setExerciseData] = useState<Record<string, { weight: number; reps: number; sets: number }>>({})
+  const [exerciseData, setExerciseData] = useState<Record<string, { 
+    weight: number; 
+    reps: number; 
+    sets: number;
+    usesIndividualSets?: boolean;
+    individualSets?: Array<{ weight: number; reps: number }>;
+  }>>({})
 
-  const handleExerciseDataChange = useCallback((exerciseId: string, data: { weight: number; reps: number; sets: number }) => {
+  const handleExerciseDataChange = useCallback((exerciseId: string, data: { 
+    weight: number; 
+    reps: number; 
+    sets: number;
+    usesIndividualSets?: boolean;
+    individualSets?: Array<{ weight: number; reps: number }>;
+  }) => {
     setExerciseData(prev => ({
       ...prev,
       [exerciseId]: data
@@ -47,7 +67,16 @@ export default function MuscleGroupSection({
   }, [onExerciseDataUpdate])
 
   const muscleGroupTotal = Object.values(exerciseData).reduce((total, data) => {
-    return total + (data.weight * data.reps * data.sets)
+    if (data.usesIndividualSets && data.individualSets && data.individualSets.length > 0) {
+      // Calculate total from individual sets
+      const setTotal = data.individualSets.reduce((setSum, set) => {
+        return setSum + (set.weight * set.reps);
+      }, 0);
+      return total + setTotal;
+    } else {
+      // Use the standard calculation
+      return total + (data.weight * data.reps * data.sets);
+    }
   }, 0)
 
   useEffect(() => {

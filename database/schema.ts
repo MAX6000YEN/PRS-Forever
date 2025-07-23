@@ -99,6 +99,7 @@ export const workoutExercises = pgTable("workout_exercises", {
 	weight: numeric({ precision: 5, scale:  2 }).notNull(),
 	reps: integer().notNull(),
 	sets: integer().notNull(),
+	usesIndividualSets: boolean("uses_individual_sets").default(false).notNull(),
 	totalWeight: numeric("total_weight", { precision: 8, scale:  2 }).generatedAlwaysAs(sql`((weight * (reps)::numeric) * (sets)::numeric)`),
 	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow(),
 }, (table) => [
@@ -121,4 +122,33 @@ export const workoutExercises = pgTable("workout_exercises", {
 	check("workout_exercises_reps_check", sql`(reps > 0) AND (reps <= 2900)`),
 	check("workout_exercises_sets_check", sql`(sets > 0) AND (sets <= 2900)`),
 	check("workout_exercises_weight_check", sql`(weight > (0)::numeric) AND (weight <= (2900)::numeric)`),
+]);
+
+export const workoutExerciseSets = pgTable("workout_exercise_sets", {
+	id: uuid().defaultRandom().primaryKey().notNull(),
+	workoutExerciseId: uuid("workout_exercise_id"),
+	setNumber: integer("set_number").notNull(),
+	weight: numeric({ precision: 5, scale: 2 }).notNull(),
+	reps: integer().notNull(),
+	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow(),
+}, (table) => [
+	foreignKey({
+		columns: [table.workoutExerciseId],
+		foreignColumns: [workoutExercises.id],
+		name: "workout_exercise_sets_workout_exercise_id_fkey"
+	}).onDelete("cascade"),
+	unique("workout_exercise_sets_workout_exercise_id_set_number_key").on(table.workoutExerciseId, table.setNumber),
+	pgPolicy("Users can view their own workout exercise sets", { as: "permissive", for: "select", to: ["public"], using: sql`(EXISTS ( SELECT 1
+   FROM workout_exercises we
+   JOIN workout_sessions ws ON we.session_id = ws.id
+   WHERE we.id = workout_exercise_sets.workout_exercise_id AND ws.user_id = auth.uid()))` }),
+	pgPolicy("Users can insert their own workout exercise sets", { as: "permissive", for: "insert", to: ["public"] }),
+	pgPolicy("Users can update their own workout exercise sets", { as: "permissive", for: "update", to: ["public"] }),
+	pgPolicy("Users can delete their own workout exercise sets", { as: "permissive", for: "delete", to: ["public"], using: sql`(EXISTS ( SELECT 1
+   FROM workout_exercises we
+   JOIN workout_sessions ws ON we.session_id = ws.id
+   WHERE we.id = workout_exercise_sets.workout_exercise_id AND ws.user_id = auth.uid()))` }),
+	check("workout_exercise_sets_set_number_check", sql`(set_number > 0) AND (set_number <= 50)`),
+	check("workout_exercise_sets_weight_check", sql`(weight > (0)::numeric) AND (weight <= (2900)::numeric)`),
+	check("workout_exercise_sets_reps_check", sql`(reps > 0) AND (reps <= 2900)`),
 ]);
